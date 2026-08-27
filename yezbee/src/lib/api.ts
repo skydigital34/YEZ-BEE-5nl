@@ -197,11 +197,25 @@ export const api = {
     try {
       const { collection, getDocs } = await import('firebase/firestore');
       const { db } = await import('./firebase');
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      let products = querySnapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
       
+      // Fetch from Firebase
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      let firebaseProducts: any[] = querySnapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      
+      // Import local dummy products
+      const localData = await import('@/data/products');
+      const localProducts = localData.INITIAL_PRODUCTS || [];
+
+      // Merge avoiding duplicates by slug or ID
+      const mergedProducts = [...firebaseProducts];
+      for (const local of localProducts) {
+        if (!mergedProducts.some(p => p.slug === local.slug || p.id === local.id)) {
+          mergedProducts.push(local);
+        }
+      }
+
       // Sort by newest first (new products will have createdAt, fallback to dummy local data behavior)
-      products = products.sort((a: any, b: any) => {
+      let products = mergedProducts.sort((a: any, b: any) => {
         if (a.createdAt && b.createdAt) {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
