@@ -5,7 +5,6 @@ import { motion, useInView } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { cn } from '@/lib/utils';
 import { YEZBEE_CATEGORIES } from '@/data/categories';
 
 export default function FeaturedCollections() {
