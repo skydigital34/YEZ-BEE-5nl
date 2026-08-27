@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, X, Mail, Phone, MapPin, ShoppingBag,
-  Heart, Activity,
+  Heart, Activity, Loader2
 } from 'lucide-react'
 import DataTable from '@/components/admin/DataTable'
+import { api } from '@/lib/api'
 
 interface Customer {
   id: string
@@ -20,33 +21,14 @@ interface Customer {
   avatar: string
 }
 
-const allCustomers: Customer[] = [
-  { id: 'CUS-001', name: 'Priya Sharma', email: 'priya.sharma@email.com', phone: '+91 98765 43210', ordersCount: 12, totalSpent: 425000, joinedDate: '2025-03-15', status: 'active', avatar: '' },
-  { id: 'CUS-002', name: 'Ananya Gupta', email: 'ananya.gupta@email.com', phone: '+91 98765 43211', ordersCount: 8, totalSpent: 215000, joinedDate: '2025-04-20', status: 'active', avatar: '' },
-  { id: 'CUS-003', name: 'Rahul Verma', email: 'rahul.verma@email.com', phone: '+91 98765 43212', ordersCount: 5, totalSpent: 98000, joinedDate: '2025-06-01', status: 'active', avatar: '' },
-  { id: 'CUS-004', name: 'Neha Patel', email: 'neha.patel@email.com', phone: '+91 98765 43213', ordersCount: 15, totalSpent: 589000, joinedDate: '2025-01-10', status: 'active', avatar: '' },
-  { id: 'CUS-005', name: 'Vikram Singh', email: 'vikram.singh@email.com', phone: '+91 98765 43214', ordersCount: 2, totalSpent: 25000, joinedDate: '2026-07-15', status: 'active', avatar: '' },
-  { id: 'CUS-006', name: 'Kavita Reddy', email: 'kavita.reddy@email.com', phone: '+91 98765 43215', ordersCount: 7, totalSpent: 182000, joinedDate: '2025-08-22', status: 'inactive', avatar: '' },
-  { id: 'CUS-007', name: 'Arjun Nair', email: 'arjun.nair@email.com', phone: '+91 98765 43216', ordersCount: 10, totalSpent: 345000, joinedDate: '2025-02-14', status: 'active', avatar: '' },
-  { id: 'CUS-008', name: 'Meera Joshi', email: 'meera.joshi@email.com', phone: '+91 98765 43217', ordersCount: 4, totalSpent: 89000, joinedDate: '2026-01-30', status: 'blocked', avatar: '' },
-  { id: 'CUS-009', name: 'Divya Kapoor', email: 'divya.kapoor@email.com', phone: '+91 98765 43218', ordersCount: 20, totalSpent: 785000, joinedDate: '2024-11-05', status: 'active', avatar: '' },
-  { id: 'CUS-010', name: 'Rohan Desai', email: 'rohan.desai@email.com', phone: '+91 98765 43219', ordersCount: 3, totalSpent: 45000, joinedDate: '2026-04-18', status: 'active', avatar: '' },
-  { id: 'CUS-011', name: 'Isha Malhotra', email: 'isha.malhotra@email.com', phone: '+91 98765 43220', ordersCount: 9, totalSpent: 298000, joinedDate: '2025-09-12', status: 'active', avatar: '' },
-  { id: 'CUS-012', name: 'Amit Thakur', email: 'amit.thakur@email.com', phone: '+91 98765 43221', ordersCount: 6, totalSpent: 156000, joinedDate: '2025-12-01', status: 'inactive', avatar: '' },
-]
-
 const customerOrders = [
   { id: 'ORD-2026-0042', date: '2026-07-30', total: 50150, status: 'confirmed' },
   { id: 'ORD-2026-0036', date: '2026-07-20', total: 28900, status: 'delivered' },
-  { id: 'ORD-2026-0028', date: '2026-07-10', total: 42500, status: 'delivered' },
-  { id: 'ORD-2026-0015', date: '2026-06-25', total: 67800, status: 'delivered' },
-  { id: 'ORD-2026-0003', date: '2026-06-05', total: 35500, status: 'delivered' },
 ]
 
 const customerWishlist = [
   { name: 'Velvet Blazer', price: 28900 },
   { name: 'Designer Lehenga', price: 85000 },
-  { name: 'Statement Necklace', price: 12500 },
 ]
 
 const statusColors: Record<string, string> = {
@@ -56,6 +38,38 @@ const statusColors: Record<string, string> = {
 }
 
 export default function CustomersPage() {
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchCustomers = async () => {
+      try {
+        const res = await api.getCustomers();
+        if (res.success && mounted) {
+          const formatted = res.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            email: c.email,
+            phone: c.phone || 'N/A',
+            ordersCount: c.totalOrders || 0,
+            totalSpent: c.totalSpent || 0,
+            joinedDate: c.lastOrder ? new Date(c.lastOrder).toISOString().split('T')[0] : 'Unknown',
+            status: 'active',
+            avatar: '',
+          }));
+          setAllCustomers(formatted);
+        }
+      } catch(e) {
+        console.error(e);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+    fetchCustomers();
+    return () => { mounted = false; };
+  }, []);
+
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)

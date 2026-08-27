@@ -100,11 +100,16 @@ export default function CheckoutPage() {
     try {
       if (paymentMethod === 'cod') {
         const orderData = {
-          items: items.map((i) => ({ product: i.id, quantity: i.quantity, price: i.price })),
+          items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: i.selectedSize })),
           shippingAddress: form,
           paymentMethod: 'COD',
           totalAmount: finalTotal,
+          status: 'pending',
+          payment: 'unpaid',
         };
+        
+        await api.createOrder(orderData);
+
         toast.success('Order placed successfully with Cash on Delivery! 📦');
         clearCart();
         router.push('/account');
@@ -119,7 +124,7 @@ export default function CheckoutPage() {
       });
 
       if (!window.Razorpay) {
-        toast.error('Razorpay SDK failed to load. Please refresh the page.');
+        toast.error('Razorpay SDK failed to load. Are you online?');
         setIsSubmitting(false);
         return;
       }
@@ -128,7 +133,7 @@ export default function CheckoutPage() {
         key: keyId,
         amount: razorpayOrder.data.amount,
         currency: razorpayOrder.data.currency,
-        name: 'YEZ BEE FASHION',
+        name: 'YEZ BEE',
         description: 'Luxury Clothing Purchase',
         image: '/images/yezbee-logo.png',
         order_id: razorpayOrder.data.id,
@@ -140,7 +145,20 @@ export default function CheckoutPage() {
               razorpaySignature: response.razorpay_signature,
             });
 
-            toast.success('Payment Verified! Order Confirmed ✨');
+            // Save order to Firebase after successful payment
+            const orderData = {
+              items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: i.selectedSize })),
+              shippingAddress: form,
+              paymentMethod: 'RAZORPAY',
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              totalAmount: finalTotal,
+              status: 'confirmed',
+              payment: 'paid',
+            };
+            await api.createOrder(orderData);
+
+            toast.success('Payment Verified! Order Confirmed 🎉');
             clearCart();
             router.push('/account');
           } catch (err: any) {
@@ -148,6 +166,12 @@ export default function CheckoutPage() {
           } finally {
             setIsSubmitting(false);
           }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            toast.error('Payment process cancelled.');
+          },
         },
         prefill: {
           name: `${form.firstName} ${form.lastName}`,

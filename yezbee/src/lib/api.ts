@@ -381,8 +381,21 @@ export const api = {
   updateProfile: (data: Partial<any>) =>
     apiClient.put<ApiResponse<any>>('/auth/profile', data).then((r) => r.data),
 
-  createOrder: (data: any) =>
-    apiClient.post<ApiResponse<any>>('/orders', data).then((r) => r.data),
+  createOrder: async (data: any) => {
+    try {
+      const { collection, addDoc } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+      const cleanData = JSON.parse(JSON.stringify(data));
+      const docRef = await addDoc(collection(db, 'orders'), {
+        ...cleanData,
+        createdAt: new Date().toISOString(),
+      });
+      return { success: true, data: { _id: docRef.id, id: docRef.id, ...cleanData } };
+    } catch(e) {
+      console.error(e);
+      throw e;
+    }
+  },
 
   createRazorpayOrder: async (data: { amount: number; currency?: string }) => {
     const res = await fetch('/api/payments/create-order', {
@@ -406,11 +419,73 @@ export const api = {
     return json;
   },
 
-  getOrders: (page?: number) =>
-    apiClient.get<PaginatedResponse<any>>('/orders', { params: { page } }).then((r) => r.data),
+  getOrders: async (page?: number) => {
+    try {
+      const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+      const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      const orders = snapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      return { success: true, data: orders };
+    } catch(e) {
+      console.error(e);
+      return { success: false, data: [] };
+    }
+  },
 
-  getOrder: (id: string) =>
-    apiClient.get<ApiResponse<any>>(`/orders/${id}`).then((r) => r.data),
+  getOrder: async (id: string) => {
+    try {
+      const { doc, getDoc } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+      const docSnap = await getDoc(doc(db, 'orders', id));
+      if (docSnap.exists()) {
+        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } };
+      }
+      return { success: false, data: null };
+    } catch (e) {
+      console.error(e);
+      return { success: false, data: null };
+    }
+  },
+
+  getCustomers: async () => {
+    try {
+      const { collection, getDocs } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+      // For now, we will aggregate customers from the orders collection
+      const snapshot = await getDocs(collection(db, 'orders'));
+      const customersMap = new Map();
+      
+      snapshot.docs.forEach(doc => {
+        const order = doc.data();
+        if (order.shippingAddress?.email) {
+          const email = order.shippingAddress.email;
+          if (!customersMap.has(email)) {
+            customersMap.set(email, {
+              id: email,
+              name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+              email: email,
+              phone: order.shippingAddress.phone,
+              totalOrders: 1,
+              totalSpent: order.totalAmount || 0,
+              lastOrder: order.createdAt,
+            });
+          } else {
+            const c = customersMap.get(email);
+            c.totalOrders += 1;
+            c.totalSpent += (order.totalAmount || 0);
+            if (new Date(order.createdAt) > new Date(c.lastOrder)) {
+              c.lastOrder = order.createdAt;
+            }
+          }
+        }
+      });
+      return { success: true, data: Array.from(customersMap.values()) };
+    } catch(e) {
+      console.error(e);
+      return { success: false, data: [] };
+    }
+  },
 
   addToCart: (data: { productId: string; variantId: string; quantity: number }) =>
     apiClient.post<ApiResponse<any>>('/cart', data).then((r) => r.data),

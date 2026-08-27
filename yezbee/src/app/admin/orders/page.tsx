@@ -1,16 +1,18 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   Search, ChevronDown, Calendar, Download,
-  X, Eye
+  X, Eye, Loader2
 } from 'lucide-react'
 import DataTable from '@/components/admin/DataTable'
+import { api } from '@/lib/api'
 
 interface Order {
   id: string
+  _id?: string
   date: string
   customer: string
   email: string
@@ -21,20 +23,6 @@ interface Order {
   phone: string
 }
 
-const allOrders: Order[] = [
-  { id: 'ORD-2026-0042', date: '2026-07-30', customer: 'Priya Sharma', email: 'priya@email.com', items: 3, total: 42500, status: 'confirmed', payment: 'paid', phone: '+91 98765 43210' },
-  { id: 'ORD-2026-0041', date: '2026-07-30', customer: 'Ananya Gupta', email: 'ananya@email.com', items: 1, total: 18900, status: 'shipped', payment: 'paid', phone: '+91 98765 43211' },
-  { id: 'ORD-2026-0040', date: '2026-07-29', customer: 'Rahul Verma', email: 'rahul@email.com', items: 2, total: 35200, status: 'processing', payment: 'paid', phone: '+91 98765 43212' },
-  { id: 'ORD-2026-0039', date: '2026-07-29', customer: 'Neha Patel', email: 'neha@email.com', items: 4, total: 67800, status: 'delivered', payment: 'paid', phone: '+91 98765 43213' },
-  { id: 'ORD-2026-0038', date: '2026-07-28', customer: 'Vikram Singh', email: 'vikram@email.com', items: 1, total: 12500, status: 'pending', payment: 'unpaid', phone: '+91 98765 43214' },
-  { id: 'ORD-2026-0037', date: '2026-07-28', customer: 'Kavita Reddy', email: 'kavita@email.com', items: 2, total: 45000, status: 'cancelled', payment: 'refunded', phone: '+91 98765 43215' },
-  { id: 'ORD-2026-0036', date: '2026-07-27', customer: 'Arjun Nair', email: 'arjun@email.com', items: 1, total: 28900, status: 'delivered', payment: 'paid', phone: '+91 98765 43216' },
-  { id: 'ORD-2026-0035', date: '2026-07-27', customer: 'Meera Joshi', email: 'meera@email.com', items: 3, total: 52000, status: 'returned', payment: 'refunded', phone: '+91 98765 43217' },
-  { id: 'ORD-2026-0034', date: '2026-07-26', customer: 'Divya Kapoor', email: 'divya@email.com', items: 2, total: 31500, status: 'shipped', payment: 'paid', phone: '+91 98765 43218' },
-  { id: 'ORD-2026-0033', date: '2026-07-26', customer: 'Rohan Desai', email: 'rohan@email.com', items: 1, total: 15500, status: 'pending', payment: 'paid', phone: '+91 98765 43219' },
-  { id: 'ORD-2026-0032', date: '2026-07-25', customer: 'Isha Malhotra', email: 'isha@email.com', items: 5, total: 89500, status: 'processing', payment: 'paid', phone: '+91 98765 43220' },
-  { id: 'ORD-2026-0031', date: '2026-07-25', customer: 'Amit Thakur', email: 'amit@email.com', items: 1, total: 42500, status: 'delivered', payment: 'paid', phone: '+91 98765 43221' },
-]
 
 const statusTabs = ['All', 'Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Returned']
 
@@ -56,6 +44,39 @@ const paymentColors: Record<string, string> = {
 }
 
 export default function OrdersPage() {
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchOrders = async () => {
+      try {
+        const res = await api.getOrders();
+        if (res.success && mounted) {
+          const formatted = res.data.map((o: any) => ({
+            id: o.id || o._id,
+            _id: o._id,
+            date: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : 'Unknown',
+            customer: o.shippingAddress ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName}` : 'Guest',
+            email: o.shippingAddress?.email || 'N/A',
+            phone: o.shippingAddress?.phone || 'N/A',
+            items: Array.isArray(o.items) ? o.items.length : 0,
+            total: o.totalAmount || 0,
+            status: o.status || 'pending',
+            payment: o.payment || 'unpaid',
+          }));
+          setAllOrders(formatted);
+        }
+      } catch (e) {
+        console.error("Failed to fetch orders:", e);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+    fetchOrders();
+    return () => { mounted = false; };
+  }, []);
+
   const [activeTab, setActiveTab] = useState('All')
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
