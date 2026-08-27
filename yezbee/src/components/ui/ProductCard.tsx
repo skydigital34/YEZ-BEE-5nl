@@ -148,7 +148,7 @@ export default function ProductCard({
               alt={name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover object-center transition-all duration-500 ease-out group-hover:scale-105 opacity-100"
+              className="object-cover object-top transition-all duration-500 ease-out group-hover:scale-105 opacity-100"
               loading="lazy"
               unoptimized={displayImage.startsWith('blob:') || displayImage.startsWith('data:')}
               onLoad={() => setImgLoaded(true)}

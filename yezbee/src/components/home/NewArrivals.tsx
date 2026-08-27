@@ -22,7 +22,10 @@ export default function NewArrivals() {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return items.filter((p) => matchesCategory(p, selectedCategory));
+    return items.filter((p) => {
+      const isNew = Boolean(p.newArrival || p.isNewProduct || p.isNew);
+      return isNew && matchesCategory(p, selectedCategory);
+    });
   }, [items, selectedCategory]);
 
   const visibleProducts = filteredProducts;

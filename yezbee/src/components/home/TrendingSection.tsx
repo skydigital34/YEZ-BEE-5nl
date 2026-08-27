@@ -11,21 +11,21 @@ const TRENDS = [
     title: 'Peplum Tops & Waist Tunics',
     description: 'Sculpted silhouettes redefining modern casual glam with all-day comfort',
     slug: '/category/peplum-tops',
-    image: '/images/hero/hero1.png',
+    image: '/images/categories/peplum-tops.png',
   },
   {
     id: 2,
     title: 'Casuals & Feeding Edit',
     description: 'Effortlessly fluid pure cotton ensembles with hidden nursing zips',
     slug: '/category/casuals/feeding',
-    image: '/images/hero/hero2.png',
+    image: '/images/categories/casuals.png',
   },
   {
     id: 3,
     title: 'Party Wear & Festive Gowns',
     description: 'Festive grace and gold embellishments designed for celebrations',
     slug: '/category/party-wear',
-    image: '/images/hero/hero3.png',
+    image: '/images/categories/party-wear.png',
   },
 ];
 
@@ -61,7 +61,7 @@ export default function TrendingSection() {
                 alt={trend.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
-                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 

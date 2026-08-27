@@ -33,13 +33,13 @@ export default function FlashSale() {
     let isMounted = true;
     setLoading(true);
 
-    api.getProducts({ limit: 40 })
+    api.getProducts({ limit: 100 })
       .then((res) => {
         if (!isMounted) return;
         const raw = extractProducts(res);
         const normalized = raw.map(normalizeProduct).filter(Boolean);
-        const discounted = normalized.filter((p) => p.discountPercentage > 0).slice(0, 4);
-        setItems(discounted.length > 0 ? discounted : normalized.slice(0, 4));
+        const discounted = normalized.filter((p) => p.discountPercentage > 0).slice(0, 20);
+        setItems(discounted.length > 0 ? discounted : normalized.slice(0, 20));
       })
       .catch((err) => {
         console.error('[FlashSale] error fetching products:', err);
@@ -54,23 +54,24 @@ export default function FlashSale() {
     };
   }, []);
 
-  const flashSaleProducts = items;
+  // We need enough items to scroll seamlessly. Duplicate the items a few times.
+  const flashSaleProducts = [...items, ...items, ...items, ...items];
 
   return (
     <section className="py-20 sm:py-28 bg-[var(--color-dark)] text-white relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--color-primary-gold)]/10 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-12 gap-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 mb-12">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 mb-2">
               <Zap size={14} className="text-[var(--color-primary-gold)] animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-[0.25em] text-[var(--color-gold-light)]">
-                FLAT 10% DISCOUNT • LIMITED TIME OFFER
+                FLAT 10% DISCOUNT — LIMITED TIME OFFER
               </span>
             </div>
             <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
-              Flash Clearance Sale – <span className="text-[var(--color-primary-gold)]">Flat 10% OFF</span>
+              Flash Clearance Sale — <span className="text-[var(--color-primary-gold)]">Flat 10% OFF</span>
             </h2>
             <div className="mt-3 h-0.5 w-16 bg-[var(--color-primary-gold)]" />
             <p className="mt-3 text-xs sm:text-sm text-white/80 font-sans max-w-lg">
@@ -90,25 +91,19 @@ export default function FlashSale() {
             </div>
           </div>
         </div>
+      </div>
 
+      <div className="relative z-10 w-full overflow-hidden">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((skel) => (
               <ProductCardSkeleton key={skel} />
             ))}
           </div>
         ) : (
-          <div
-            ref={ref}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          >
+          <div className="flex w-max animate-marquee gap-6 px-4">
             {flashSaleProducts.map((product, i) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: 'easeOut' }}
-              >
+              <div key={`${product.id}-${i}`} className="w-[280px] sm:w-[320px] shrink-0">
                 <ProductCard
                   id={product.id}
                   name={product.name}
@@ -124,11 +119,13 @@ export default function FlashSale() {
                   discount={product.discountPercentage || 10}
                   stock={product.stock}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         )}
+      </div>
 
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="mt-12 text-center">
           <Link
             href="/sale"
