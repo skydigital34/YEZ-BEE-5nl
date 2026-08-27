@@ -198,7 +198,18 @@ export const api = {
       const { collection, getDocs } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const products = querySnapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      let products = querySnapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      
+      // Sort by newest first (new products will have createdAt, fallback to dummy local data behavior)
+      products = products.sort((a: any, b: any) => {
+        if (a.createdAt && b.createdAt) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+        if (a.createdAt) return -1;
+        if (b.createdAt) return 1;
+        return 0;
+      });
+
       return { success: true, data: products, pagination: { page: 1, limit: 200, total: products.length, totalPages: 1, hasNext: false, hasPrev: false } };
     } catch (e) {
       console.error("Firebase getProducts error", e);
