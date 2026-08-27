@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useParams } from 'next/navigation';
-import { CategoryPageContent } from '../page';
+import { CategoryPageContent } from '../ClientPage';
 
 export default function SubcategoryPage() {
   const params = useParams();

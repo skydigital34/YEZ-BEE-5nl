@@ -206,29 +206,31 @@ export const api = {
     }
   },
 
-  getProduct: async (slug: string) => {
+  getProduct: async (slug: string): Promise<any> => {
     try {
       const { collection, getDocs, query, where } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const q = query(collection(db, 'products'), where('slug', '==', slug));
       const querySnapshot = await getDocs(q);
+      
       if (!querySnapshot.empty) {
-        const doc = querySnapshot.docs[0];
-        return { success: true, data: { _id: doc.id, id: doc.id, ...doc.data() } };
+        const docSnap = querySnapshot.docs[0];
+        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } as any };
       }
-      return null;
-    } catch (err: any) {
-      return null;
+      return { success: false, data: null };
+    } catch(e) {
+      console.error(e);
+      throw e;
     }
   },
 
-  getProductById: async (id: string) => {
+  getProductById: async (id: string): Promise<any> => {
     try {
       const { doc, getDoc } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const docSnap = await getDoc(doc(db, 'products', id));
       if (docSnap.exists()) {
-        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } };
+        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } as any };
       }
       return null;
     } catch (e) {
