@@ -100,7 +100,7 @@ export default function CheckoutPage() {
     try {
       if (paymentMethod === 'cod') {
         const orderData = {
-          items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: i.selectedSize })),
+          items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: (i as any).size || null })),
           shippingAddress: form,
           paymentMethod: 'COD',
           totalAmount: finalTotal,
@@ -147,7 +147,7 @@ export default function CheckoutPage() {
 
             // Save order to Firebase after successful payment
             const orderData = {
-              items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: i.selectedSize })),
+              items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: (i as any).size || null })),
               shippingAddress: form,
               paymentMethod: 'RAZORPAY',
               razorpayOrderId: response.razorpay_order_id,
@@ -166,12 +166,6 @@ export default function CheckoutPage() {
           } finally {
             setIsSubmitting(false);
           }
-        },
-        modal: {
-          ondismiss: function () {
-            setIsSubmitting(false);
-            toast.error('Payment process cancelled.');
-          },
         },
         prefill: {
           name: `${form.firstName} ${form.lastName}`,

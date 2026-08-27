@@ -55,7 +55,7 @@ export default function CustomersPage() {
             ordersCount: c.totalOrders || 0,
             totalSpent: c.totalSpent || 0,
             joinedDate: c.lastOrder ? new Date(c.lastOrder).toISOString().split('T')[0] : 'Unknown',
-            status: 'active',
+            status: 'active' as const,
             avatar: '',
           }));
           setAllCustomers(formatted);
