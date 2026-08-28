@@ -419,7 +419,7 @@ export default function CheckoutPage() {
             </AnimatePresence>
           </div>
 
-          <div className="lg:col-span-5 sticky top-28">
+          <div className="lg:col-span-5 lg:sticky lg:top-28">
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[var(--color-champagne)]/60 shadow-soft-md space-y-4">
               <h3 className="font-display font-bold text-lg text-[var(--color-dark)] pb-3 border-b border-[var(--color-champagne)]">
                 Items Summary

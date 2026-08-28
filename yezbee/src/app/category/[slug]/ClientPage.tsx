@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -20,9 +20,8 @@ import {
   YEZBEE_CATEGORIES,
   getCategoryBySlug,
 } from '@/data/categories';
-import { getAllProducts, getProductsByCategory } from '@/data/products';
+import { getAllProducts } from '@/data/products';
 import { extractProducts, normalizeProduct, matchesCategory } from '@/lib/utils';
-import axios from 'axios';
 import { api } from '@/lib/api';
 
 const WOMEN_SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
@@ -49,12 +48,270 @@ const SORT_OPTIONS = [
   { value: 'rating', label: 'Highest Rated' },
 ];
 
+interface FilterSidebarProps {
+  slug: string;
+  subSlug?: string;
+  categoryConfig: any;
+  showProductTypeFilter: boolean;
+  selectedProductType: string;
+  setSelectedProductType: (val: string) => void;
+  availableSizeList: readonly string[];
+  selectedSizes: string[];
+  toggleSize: (sz: string) => void;
+  selectedColors: string[];
+  toggleColor: (c: string) => void;
+  selectedFabrics: string[];
+  toggleFabric: (f: string) => void;
+  inStockOnly: boolean;
+  setInStockOnly: (val: boolean) => void;
+  expandedSections: Record<string, boolean>;
+  setExpandedSections: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  activeFilterCount: number;
+  clearAllFilters: () => void;
+  router: any;
+}
+
+function FilterSidebar({
+  slug,
+  subSlug,
+  categoryConfig,
+  showProductTypeFilter,
+  selectedProductType,
+  setSelectedProductType,
+  availableSizeList,
+  selectedSizes,
+  toggleSize,
+  selectedColors,
+  toggleColor,
+  selectedFabrics,
+  toggleFabric,
+  inStockOnly,
+  setInStockOnly,
+  expandedSections,
+  setExpandedSections,
+  activeFilterCount,
+  clearAllFilters,
+  router,
+}: FilterSidebarProps) {
+  return (
+    <div className="space-y-6 bg-white p-6 rounded-2xl border border-[var(--color-champagne)]/60 shadow-soft-sm" suppressHydrationWarning>
+      <div className="flex items-center justify-between pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-[var(--color-dark)] flex items-center gap-2" suppressHydrationWarning>
+          <Filter size={14} className="text-[var(--color-primary-gold)]" /> Filters
+        </h3>
+        {activeFilterCount > 0 && (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs text-[var(--color-primary-gold)] hover:underline font-semibold"
+            suppressHydrationWarning
+          >
+            Clear All ({activeFilterCount})
+          </button>
+        )}
+      </div>
+
+      <div className="pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+        <button
+          type="button"
+          onClick={() => setExpandedSections((prev) => ({ ...prev, category: !prev.category }))}
+          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
+          suppressHydrationWarning
+        >
+          <span>Categories</span>
+          {expandedSections.category ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {expandedSections.category && (
+          <div className="mt-3 space-y-1.5 text-xs font-sans" suppressHydrationWarning>
+            {YEZBEE_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.id}
+                href={cat.path}
+                className={`block py-2 px-3 rounded-xl transition-all ${slug === cat.slug
+                    ? 'bg-[var(--color-dark)] text-white font-bold shadow-sm'
+                    : 'text-[var(--color-dark)]/80 hover:bg-[var(--color-champagne)]/40 hover:text-[var(--color-dark)] font-semibold'
+                  }`}
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {showProductTypeFilter && (
+        <div className="pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+          <button
+            type="button"
+            onClick={() => setExpandedSections((prev) => ({ ...prev, productType: !prev.productType }))}
+            className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
+            suppressHydrationWarning
+          >
+            <span>Product Type</span>
+            {expandedSections.productType ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+          {expandedSections.productType && (
+            <div className="mt-3 space-y-2 text-xs font-sans" suppressHydrationWarning>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProductType('all');
+                  if (subSlug) router.push(`/category/${slug}`);
+                }}
+                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'all'
+                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)]'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
+                  }`}
+                suppressHydrationWarning
+              >
+                All {categoryConfig ? categoryConfig.name : 'Products'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProductType('FEEDING');
+                  router.push(`/category/${slug}/feeding`);
+                }}
+                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'FEEDING'
+                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
+                  }`}
+                suppressHydrationWarning
+              >
+                FEEDING
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProductType('NON-FEEDING');
+                  router.push(`/category/${slug}/non-feeding`);
+                }}
+                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'NON-FEEDING'
+                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
+                  }`}
+                suppressHydrationWarning
+              >
+                NON-FEEDING
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+        <button
+          type="button"
+          onClick={() => setExpandedSections((prev) => ({ ...prev, size: !prev.size }))}
+          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
+          suppressHydrationWarning
+        >
+          <span>Size</span>
+          {expandedSections.size ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {expandedSections.size && (
+          <div className="mt-3 flex flex-wrap gap-2" suppressHydrationWarning>
+            {availableSizeList.map((sz) => (
+              <button
+                key={sz}
+                type="button"
+                onClick={() => toggleSize(sz)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${selectedSizes.includes(sz)
+                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
+                  }`}
+                suppressHydrationWarning
+              >
+                {sz}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+        <button
+          type="button"
+          onClick={() => setExpandedSections((prev) => ({ ...prev, color: !prev.color }))}
+          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
+          suppressHydrationWarning
+        >
+          <span>Color Palette</span>
+          {expandedSections.color ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {expandedSections.color && (
+          <div className="mt-3 grid grid-cols-4 gap-2" suppressHydrationWarning>
+            {COLORS.map((color) => (
+              <button
+                key={color.name}
+                type="button"
+                onClick={() => toggleColor(color.name)}
+                className={`w-8 h-8 rounded-full border border-gray-300 transition-all ${selectedColors.includes(color.name)
+                    ? 'ring-2 ring-[var(--color-primary-gold)] ring-offset-2 scale-110'
+                    : 'hover:scale-105'
+                  }`}
+                style={{ backgroundColor: color.hex }}
+                title={color.name}
+                aria-label={`Filter by color ${color.name}`}
+                suppressHydrationWarning
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="pb-4 border-b border-[var(--color-champagne)]" suppressHydrationWarning>
+        <button
+          type="button"
+          onClick={() => setExpandedSections((prev) => ({ ...prev, fabric: !prev.fabric }))}
+          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
+          suppressHydrationWarning
+        >
+          <span>Fabrics</span>
+          {expandedSections.fabric ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+        {expandedSections.fabric && (
+          <div className="mt-3 space-y-2" suppressHydrationWarning>
+            {FABRICS.map((fabric) => (
+              <label
+                key={fabric}
+                className="flex items-center gap-2 text-xs text-[var(--color-dark)]/80 cursor-pointer hover:text-[var(--color-primary-gold)] font-medium"
+                suppressHydrationWarning
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedFabrics.includes(fabric)}
+                  onChange={() => toggleFabric(fabric)}
+                  className="rounded border-gray-300 text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)]"
+                />
+                <span>{fabric}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div suppressHydrationWarning>
+        <label className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-[var(--color-dark)] cursor-pointer" suppressHydrationWarning>
+          <span>In Stock Only</span>
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(e) => setInStockOnly(e.target.checked)}
+            className="rounded border-gray-300 text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)] h-4 w-4"
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const slug = (params.slug as string) || 'all';
+  const slug = (params?.slug as string) || 'all';
 
   const queryProductType = searchParams.get('type') || searchParams.get('productType');
   const initialTypeFilter = subSlug
@@ -93,11 +350,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
     }
   }, [subSlug]);
 
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(() => {
-    const sizeParam = searchParams.get('size');
-    if (!sizeParam) return [];
-    return sizeParam.split(',');
-  });
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
   useEffect(() => {
     const sizeParam = searchParams.get('size');
@@ -152,12 +405,6 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
     updateSizeUrl([]);
   }, [updateSizeUrl]);
 
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const activeFilterCount =
     (selectedProductType !== 'all' ? 1 : 0) +
     selectedColors.length +
@@ -165,13 +412,16 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
     selectedFabrics.length +
     (inStockOnly ? 1 : 0);
 
-  const [dbProducts, setDbProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with static products so SSR and initial client render match 100%
+  const [dbProducts, setDbProducts] = useState<any[]>(() => {
+    const all = getAllProducts().map((p: any) => normalizeProduct(p)).filter(Boolean);
+    const filtered = all.filter((p: any) => matchesCategory(p, slug, initialTypeFilter));
+    return slug === 'all' ? all : (filtered.length > 0 ? filtered : all.filter((p: any) => matchesCategory(p, slug)));
+  });
 
   useEffect(() => {
     let isMountedFlag = true;
     const fetchLiveProducts = async () => {
-      setLoading(true);
       try {
         const response = await api.getProducts({
           limit: 100,
@@ -183,26 +433,13 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
         const normalized = (raw.length > 0 ? raw : getAllProducts()).map((p: any) => normalizeProduct(p)).filter(Boolean);
         const filtered = normalized.filter((p: any) => matchesCategory(p, slug, selectedProductType));
 
-        // If this specific category has products, show them; if viewing all, show all normalized
         setDbProducts(slug === 'all' ? normalized : (filtered.length > 0 ? filtered : normalized.filter((p: any) => matchesCategory(p, slug))));
       } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error('[CategoryPage] API Error:', {
-            url: error.config?.url,
-            baseURL: error.config?.baseURL,
-            status: error.response?.status,
-            data: error.response?.data,
-          });
-        } else {
-          console.error('[CategoryPage] Unexpected error:', error);
-        }
         if (isMountedFlag) {
           const fallback = getAllProducts().map((p: any) => normalizeProduct(p)).filter(Boolean);
           const filtered = fallback.filter((p: any) => matchesCategory(p, slug, selectedProductType));
           setDbProducts(slug === 'all' ? fallback : (filtered.length > 0 ? filtered : fallback));
         }
-      } finally {
-        if (isMountedFlag) setLoading(false);
       }
     };
 
@@ -220,12 +457,12 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
 
   const filteredProducts = useMemo(() => {
     return dbProducts.filter((p) => {
-      if (selectedColors.length && !p.colors.some((c: any) => selectedColors.includes(typeof c === 'string' ? c : c.name))) {
+      if (selectedColors.length && !p.colors?.some((c: any) => selectedColors.includes(typeof c === 'string' ? c : c.name))) {
         return false;
       }
 
       if (selectedSizes.length) {
-        const hasMatchingSize = selectedSizes.some((s) => p.sizes.includes(s));
+        const hasMatchingSize = selectedSizes.some((s) => p.sizes?.includes(s));
         if (!hasMatchingSize) return false;
       }
 
@@ -255,195 +492,6 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
   }, [filteredProducts, sortBy]);
 
   const displayedProducts = sortedProducts.slice(0, visibleCount);
-
-  const FilterSidebar = () => (
-    <div className="space-y-6 bg-white p-6 rounded-2xl border border-[var(--color-champagne)]/60 shadow-soft-sm">
-      <div className="flex items-center justify-between pb-4 border-b border-[var(--color-champagne)]">
-        <h3 className="font-display font-bold text-sm uppercase tracking-wider text-[var(--color-dark)] flex items-center gap-2">
-          <Filter size={14} className="text-[var(--color-primary-gold)]" /> Filters
-        </h3>
-        {activeFilterCount > 0 && (
-          <button
-            onClick={clearAllFilters}
-            className="text-xs text-[var(--color-primary-gold)] hover:underline font-semibold"
-          >
-            Clear All ({activeFilterCount})
-          </button>
-        )}
-      </div>
-
-      <div className="pb-4 border-b border-[var(--color-champagne)]">
-        <button
-          onClick={() => setExpandedSections((prev) => ({ ...prev, category: !prev.category }))}
-          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
-        >
-          <span>Categories</span>
-          {expandedSections.category ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        {expandedSections.category && (
-          <div className="mt-3 space-y-1.5 text-xs font-sans">
-            {YEZBEE_CATEGORIES.map((cat) => (
-              <Link
-                key={cat.id}
-                href={cat.path}
-                className={`block py-2 px-3 rounded-xl transition-all ${slug === cat.slug
-                    ? 'bg-[var(--color-dark)] text-white font-bold shadow-sm'
-                    : 'text-[var(--color-dark)]/80 hover:bg-[var(--color-champagne)]/40 hover:text-[var(--color-dark)] font-semibold'
-                  }`}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {showProductTypeFilter && (
-        <div className="pb-4 border-b border-[var(--color-champagne)]">
-          <button
-            onClick={() => setExpandedSections((prev) => ({ ...prev, productType: !prev.productType }))}
-            className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
-          >
-            <span>Product Type</span>
-            {expandedSections.productType ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          {expandedSections.productType && (
-            <div className="mt-3 space-y-2 text-xs font-sans">
-              <button
-                onClick={() => {
-                  setSelectedProductType('all');
-                  if (subSlug) router.push(`/category/${slug}`);
-                }}
-                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'all'
-                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)]'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
-                  }`}
-              >
-                All {categoryConfig ? categoryConfig.name : 'Products'}
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedProductType('FEEDING');
-                  router.push(`/category/${slug}/feeding`);
-                }}
-                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'FEEDING'
-                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
-                  }`}
-              >
-                FEEDING
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedProductType('NON-FEEDING');
-                  router.push(`/category/${slug}/non-feeding`);
-                }}
-                className={`w-full text-left py-2 px-3 rounded-xl border text-xs font-bold transition-all ${selectedProductType === 'NON-FEEDING'
-                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
-                  }`}
-              >
-                NON-FEEDING
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="pb-4 border-b border-[var(--color-champagne)]">
-        <button
-          onClick={() => setExpandedSections((prev) => ({ ...prev, size: !prev.size }))}
-          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
-        >
-          <span>Size</span>
-          {expandedSections.size ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        {expandedSections.size && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {availableSizeList.map((sz) => (
-              <button
-                key={sz}
-                onClick={() => toggleSize(sz)}
-                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${selectedSizes.includes(sz)
-                    ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-black'
-                  }`}
-              >
-                {sz}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="pb-4 border-b border-[var(--color-champagne)]">
-        <button
-          onClick={() => setExpandedSections((prev) => ({ ...prev, color: !prev.color }))}
-          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
-        >
-          <span>Color Palette</span>
-          {expandedSections.color ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        {expandedSections.color && (
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {COLORS.map((color) => (
-              <button
-                key={color.name}
-                onClick={() => toggleColor(color.name)}
-                className={`w-8 h-8 rounded-full border border-gray-300 transition-all ${selectedColors.includes(color.name)
-                    ? 'ring-2 ring-[var(--color-primary-gold)] ring-offset-2 scale-110'
-                    : 'hover:scale-105'
-                  }`}
-                style={{ backgroundColor: color.hex }}
-                title={color.name}
-                aria-label={`Filter by color ${color.name}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="pb-4 border-b border-[var(--color-champagne)]">
-        <button
-          onClick={() => setExpandedSections((prev) => ({ ...prev, fabric: !prev.fabric }))}
-          className="flex items-center justify-between w-full text-left font-semibold text-xs uppercase tracking-wider text-[var(--color-dark)]"
-        >
-          <span>Fabrics</span>
-          {expandedSections.fabric ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </button>
-        {expandedSections.fabric && (
-          <div className="mt-3 space-y-2">
-            {FABRICS.map((fabric) => (
-              <label
-                key={fabric}
-                className="flex items-center gap-2 text-xs text-[var(--color-dark)]/80 cursor-pointer hover:text-[var(--color-primary-gold)] font-medium"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedFabrics.includes(fabric)}
-                  onChange={() => toggleFabric(fabric)}
-                  className="rounded border-gray-300 text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)]"
-                />
-                <span>{fabric}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <label className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-[var(--color-dark)] cursor-pointer">
-          <span>In Stock Only</span>
-          <input
-            type="checkbox"
-            checked={inStockOnly}
-            onChange={(e) => setInStockOnly(e.target.checked)}
-            className="rounded border-gray-300 text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)] h-4 w-4"
-          />
-        </label>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-[var(--color-warm-white)] font-sans" suppressHydrationWarning>
@@ -493,6 +541,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-[var(--color-champagne)]">
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => setShowMobileFilter(true)}
               className="lg:hidden inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-xl"
               suppressHydrationWarning
@@ -501,8 +550,8 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
             </button>
 
             <p className="text-xs text-gray-500 font-semibold" suppressHydrationWarning>
-              Showing <span className="font-bold text-black" suppressHydrationWarning>{isMounted ? displayedProducts.length : 0}</span> of{' '}
-              <span className="font-bold text-black" suppressHydrationWarning>{isMounted ? sortedProducts.length : 0}</span> styles
+              Showing <span className="font-bold text-black" suppressHydrationWarning>{displayedProducts.length}</span> of{' '}
+              <span className="font-bold text-black" suppressHydrationWarning>{sortedProducts.length}</span> styles
             </p>
           </div>
 
@@ -523,6 +572,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
 
             <div className="hidden sm:flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white">
               <button
+                type="button"
                 onClick={() => setViewMode('grid')}
                 className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-[var(--color-dark)] text-white' : 'text-gray-400 hover:text-black'}`}
                 aria-label="Grid view"
@@ -531,6 +581,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
                 <Grid3X3 size={16} />
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('list')}
                 className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-[var(--color-dark)] text-white' : 'text-gray-400 hover:text-black'}`}
                 aria-label="List view"
@@ -543,18 +594,33 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="hidden lg:block lg:col-span-3 sticky top-24">
-            <FilterSidebar />
+          <div className="hidden lg:block lg:col-span-3 sticky top-24" suppressHydrationWarning>
+            <FilterSidebar
+              slug={slug}
+              subSlug={subSlug}
+              categoryConfig={categoryConfig}
+              showProductTypeFilter={showProductTypeFilter}
+              selectedProductType={selectedProductType}
+              setSelectedProductType={setSelectedProductType}
+              availableSizeList={availableSizeList}
+              selectedSizes={selectedSizes}
+              toggleSize={toggleSize}
+              selectedColors={selectedColors}
+              toggleColor={toggleColor}
+              selectedFabrics={selectedFabrics}
+              toggleFabric={toggleFabric}
+              inStockOnly={inStockOnly}
+              setInStockOnly={setInStockOnly}
+              expandedSections={expandedSections}
+              setExpandedSections={setExpandedSections}
+              activeFilterCount={activeFilterCount}
+              clearAllFilters={clearAllFilters}
+              router={router}
+            />
           </div>
 
           <div className="lg:col-span-9" suppressHydrationWarning>
-            {!isMounted || loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((skel) => (
-                  <div key={skel} className="aspect-[3/4] bg-gray-200/60 animate-pulse rounded-2xl border border-gray-100" />
-                ))}
-              </div>
-            ) : displayedProducts.length > 0 ? (
+            {displayedProducts.length > 0 ? (
               <div
                 className={
                   viewMode === 'grid'
@@ -580,6 +646,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   {activeFilterCount > 0 && (
                     <button
+                      type="button"
                       onClick={clearAllFilters}
                       className="px-6 py-2.5 bg-gray-100 text-gray-800 text-xs font-bold rounded-full hover:bg-gray-200 transition-all"
                       suppressHydrationWarning
@@ -597,9 +664,10 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
               </div>
             )}
 
-            {isMounted && displayedProducts.length < sortedProducts.length && (
+            {displayedProducts.length < sortedProducts.length && (
               <div className="mt-12 text-center">
                 <button
+                  type="button"
                   onClick={() => setVisibleCount((prev) => prev + 12)}
                   className="px-8 py-3 bg-[var(--color-dark)] text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-black transition-all shadow-md"
                   suppressHydrationWarning
@@ -630,15 +698,38 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
               <div>
                 <div className="flex items-center justify-between pb-4 border-gray-200 mb-6">
                   <h3 className="font-bold text-sm uppercase tracking-wider">Filters</h3>
-                  <button onClick={() => setShowMobileFilter(false)} className="p-1">
+                  <button type="button" onClick={() => setShowMobileFilter(false)} className="p-1" suppressHydrationWarning>
                     <X size={20} />
                   </button>
                 </div>
-                <FilterSidebar />
+                <FilterSidebar
+                  slug={slug}
+                  subSlug={subSlug}
+                  categoryConfig={categoryConfig}
+                  showProductTypeFilter={showProductTypeFilter}
+                  selectedProductType={selectedProductType}
+                  setSelectedProductType={setSelectedProductType}
+                  availableSizeList={availableSizeList}
+                  selectedSizes={selectedSizes}
+                  toggleSize={toggleSize}
+                  selectedColors={selectedColors}
+                  toggleColor={toggleColor}
+                  selectedFabrics={selectedFabrics}
+                  toggleFabric={toggleFabric}
+                  inStockOnly={inStockOnly}
+                  setInStockOnly={setInStockOnly}
+                  expandedSections={expandedSections}
+                  setExpandedSections={setExpandedSections}
+                  activeFilterCount={activeFilterCount}
+                  clearAllFilters={clearAllFilters}
+                  router={router}
+                />
               </div>
               <button
+                type="button"
                 onClick={() => setShowMobileFilter(false)}
                 className="w-full py-3 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-xl mt-6"
+                suppressHydrationWarning
               >
                 Apply Filters
               </button>
@@ -657,4 +748,3 @@ export default function CategoryPage() {
     </Suspense>
   );
 }
-

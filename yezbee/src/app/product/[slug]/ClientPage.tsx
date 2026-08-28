@@ -564,7 +564,7 @@ export default function ProductDetailPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 sticky top-24">
+          <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4 lg:sticky lg:top-24">
             {product.images.length > 1 && (
               <div className="hidden md:flex flex-col gap-3 shrink-0 w-20">
                 {product.images.map((img, index) => (
