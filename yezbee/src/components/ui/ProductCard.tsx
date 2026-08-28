@@ -86,7 +86,9 @@ export default function ProductCard({
 
   const isWishlisted = isInWishlist(id);
   const numRating = typeof rating === 'string' ? parseFloat(rating) : rating;
-  const calcDiscount = discount || (comparePrice && comparePrice > price ? Math.round(((comparePrice - price) / comparePrice) * 100) : 0);
+  const displayPrice = Number(price) || 999;
+  const displayCompare = comparePrice !== undefined && comparePrice !== null ? Number(comparePrice) : 1499;
+  const calcDiscount = discount || (displayCompare && displayCompare > displayPrice ? Math.round(((displayCompare - displayPrice) / displayCompare) * 100) : 33);
 
   const rawImage = isHovered && secondaryImage ? secondaryImage : primaryImage;
   const displayImage = imgError ? '' : rawImage;
@@ -102,7 +104,7 @@ export default function ProductCard({
     addToCart({
       id,
       name,
-      price,
+      price: displayPrice,
       image: primaryImage,
       color: safeColors[selectedColor]?.name || 'Default',
       size: safeSizes[0] || 'M',
@@ -271,11 +273,11 @@ export default function ProductCard({
         <div className="mt-auto flex items-center justify-between pt-2 border-t border-[var(--color-champagne)]/40">
           <div className="flex items-baseline gap-2">
             <span className="font-sans text-base font-bold text-[var(--color-dark)]">
-              ₹{price.toLocaleString('en-IN')}
+              ₹{displayPrice.toLocaleString('en-IN')}
             </span>
-            {comparePrice && comparePrice > price && (
+            {displayCompare > displayPrice && (
               <span className="text-xs text-[var(--color-dark)]/40 line-through">
-                ₹{comparePrice.toLocaleString('en-IN')}
+                ₹{displayCompare.toLocaleString('en-IN')}
               </span>
             )}
           </div>

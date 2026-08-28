@@ -224,7 +224,20 @@ export const api = {
         return 0;
       });
 
-      return { success: true, data: products, pagination: { page: 1, limit: 200, total: products.length, totalPages: 1, hasNext: false, hasPrev: false } };
+      const normalizedList = products.map((p: any) => ({
+        ...p,
+        price: 999,
+        compareAtPrice: 1499,
+        discount: 33,
+        discountPercentage: 33,
+        variants: (Array.isArray(p.variants) ? p.variants : []).map((v: any) => ({
+          ...v,
+          price: 999,
+          compareAtPrice: 1499,
+        })),
+      }));
+
+      return { success: true, data: normalizedList, pagination: { page: 1, limit: 200, total: normalizedList.length, totalPages: 1, hasNext: false, hasPrev: false } };
     } catch (e) {
       console.error("Firebase getProducts error", e);
       return { success: false, data: [] };
@@ -241,14 +254,48 @@ export const api = {
       
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
-        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } as any };
+        const data = docSnap.data();
+        return {
+          success: true,
+          data: {
+            _id: docSnap.id,
+            id: docSnap.id,
+            ...data,
+            price: 999,
+            compareAtPrice: 1499,
+            discount: 33,
+            discountPercentage: 33,
+            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+              ...v,
+              price: 999,
+              compareAtPrice: 1499,
+            })),
+          } as any
+        };
       }
       
       // Fallback: check if the 'slug' is actually a document ID
       const docRef = doc(db, 'products', slug);
       const docSnapById = await getDoc(docRef);
       if (docSnapById.exists()) {
-        return { success: true, data: { _id: docSnapById.id, id: docSnapById.id, ...docSnapById.data() } as any };
+        const data = docSnapById.data();
+        return {
+          success: true,
+          data: {
+            _id: docSnapById.id,
+            id: docSnapById.id,
+            ...data,
+            price: 999,
+            compareAtPrice: 1499,
+            discount: 33,
+            discountPercentage: 33,
+            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+              ...v,
+              price: 999,
+              compareAtPrice: 1499,
+            })),
+          } as any
+        };
       }
       
       return { success: false, data: null };
@@ -264,7 +311,24 @@ export const api = {
       const { db } = await import('./firebase');
       const docSnap = await getDoc(doc(db, 'products', id));
       if (docSnap.exists()) {
-        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } as any };
+        const data = docSnap.data();
+        return {
+          success: true,
+          data: {
+            _id: docSnap.id,
+            id: docSnap.id,
+            ...data,
+            price: 999,
+            compareAtPrice: 1499,
+            discount: 33,
+            discountPercentage: 33,
+            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+              ...v,
+              price: 999,
+              compareAtPrice: 1499,
+            })),
+          } as any
+        };
       }
       return null;
     } catch (e) {
@@ -295,7 +359,23 @@ export const api = {
       const { collection, getDocs } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const products = querySnapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      const products = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          _id: doc.id,
+          id: doc.id,
+          ...data,
+          price: 999,
+          compareAtPrice: 1499,
+          discount: 33,
+          discountPercentage: 33,
+          variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+            ...v,
+            price: 999,
+            compareAtPrice: 1499,
+          })),
+        };
+      });
       return { success: true, data: products, pagination: { page: 1, limit: 200, total: products.length, totalPages: 1, hasNext: false, hasPrev: false } };
     } catch (e) {
       console.error("Firebase getAdminProducts error", e);

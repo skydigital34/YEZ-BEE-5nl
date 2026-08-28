@@ -14,8 +14,8 @@ import {
 const INITIAL_WISHLIST = Array.from({ length: 6 }, (_, i) => ({
   id: i + 1,
   name: `Luxe ${['Gown', 'Dress', 'Top', 'Blazer', 'Jumpsuit', 'Saree'][i]}`,
-  price: 2499 + i * 500,
-  comparePrice: i % 3 === 0 ? 3999 + i * 500 : null,
+  price: 999,
+  comparePrice: 1499,
   rating: (3.5 + (i % 15) * 0.1).toFixed(1),
   reviews: Math.floor(Math.random() * 200) + 10,
   inStock: i !== 4,

@@ -120,9 +120,9 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   ]);
   const [newHighlight, setNewHighlight] = useState('');
 
-  const [price, setPrice] = useState<number | ''>(1899);
-  const [compareAtPrice, setCompareAtPrice] = useState<number | ''>(2499);
-  const [costPrice, setCostPrice] = useState<number | ''>(950);
+  const [price, setPrice] = useState<number | ''>(999);
+  const [compareAtPrice, setCompareAtPrice] = useState<number | ''>(1499);
+  const [costPrice, setCostPrice] = useState<number | ''>(450);
 
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
     PRESET_COLORS[0],
@@ -140,8 +140,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       color: 'Peach Floral',
       colorHex: '#FFDAB9',
       size: 'S',
-      price: 1899,
-      compareAtPrice: 2499,
+      price: 999,
+      compareAtPrice: 1499,
       stock: 10,
       lowStockThreshold: 5,
       isActive: true,
@@ -152,8 +152,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       color: 'Peach Floral',
       colorHex: '#FFDAB9',
       size: 'M',
-      price: 1899,
-      compareAtPrice: 2499,
+      price: 999,
+      compareAtPrice: 1499,
       stock: 15,
       lowStockThreshold: 5,
       isActive: true,
@@ -660,7 +660,35 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
 
-    const formattedVariants = variants.map((v) => ({
+    // Ensure variants strictly match active selected colors and sizes
+    const activeColorNames = selectedColors.map((c) => c.name);
+    let finalVariants: FormVariant[] = variants.filter(
+      (v) => activeColorNames.includes(v.color) && selectedSizes.includes(v.size)
+    );
+
+    // If variants were not regenerated after selecting new colors/sizes, generate them automatically
+    if (finalVariants.length === 0 && selectedColors.length > 0 && selectedSizes.length > 0) {
+      const baseCode = (slug || 'PROD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      selectedColors.forEach((colorObj) => {
+        const colorShort = colorObj.name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'COL';
+        selectedSizes.forEach((sz) => {
+          finalVariants.push({
+            id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+            sku: `YZB-${baseCode}-${colorShort}-${sz}`,
+            color: colorObj.name,
+            colorHex: colorObj.hex,
+            size: sz,
+            price: Number(price) || 0,
+            compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+            stock: 10,
+            lowStockThreshold: 5,
+            isActive: true,
+          });
+        });
+      });
+    }
+
+    const formattedVariants = finalVariants.map((v) => ({
       sku: v.sku,
       color: v.color,
       colorHex: v.colorHex,
@@ -709,6 +737,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       occasion,
       careInstructions: careInstructions.split(',').map((c) => c.trim()).filter(Boolean),
       images: formattedImages,
+      colors: selectedColors,
+      sizes: selectedSizes,
       variants: formattedVariants,
       seo: {
         title: seoTitle || `${name} | YEZ BEE Fashion`,

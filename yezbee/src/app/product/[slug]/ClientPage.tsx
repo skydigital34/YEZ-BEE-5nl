@@ -186,9 +186,9 @@ export default function ProductDetailPage() {
         const res = await api.getProduct(slug);
         if (res && res.data && isMounted) {
           const p = res.data;
-          const minPrice = p.price || (p.variants || []).reduce((min: number, v: any) => Math.min(min, v.price || Infinity), Infinity) || 0;
-          const maxCompare = p.compareAtPrice || (p.variants || []).reduce((max: number, v: any) => Math.max(max, v.compareAtPrice || 0), 0);
-          const discountPct = p.discount || (maxCompare > minPrice && maxCompare > 0 ? Math.round(((maxCompare - minPrice) / maxCompare) * 100) : 0);
+          const minPrice = Number(p.price) || (p.variants || []).reduce((min: number, v: any) => Math.min(min, Number(v.price) || Infinity), Infinity) || 999;
+          const maxCompare = Number(p.compareAtPrice) || (p.variants || []).reduce((max: number, v: any) => Math.max(max, Number(v.compareAtPrice) || 0), 0) || 1499;
+          const discountPct = Number(p.discount) || (maxCompare > minPrice && maxCompare > 0 ? Math.round(((maxCompare - minPrice) / maxCompare) * 100) : 33);
           const totalStock = (p.variants || []).reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
 
           const rawImages = Array.isArray(p.images) && p.images.length > 0
@@ -229,7 +229,7 @@ export default function ProductDetailPage() {
             description: p.description || '',
             shortDescription: p.shortDescription || p.description || '',
             price: minPrice,
-            compareAtPrice: maxCompare > minPrice ? maxCompare : undefined,
+            compareAtPrice: maxCompare && maxCompare > minPrice ? maxCompare : 1499,
             discountPercentage: discountPct,
             category: p.category?.slug || p.category || 'casuals',
             categoryName: p.category?.name || p.subcategory || 'CASUALS',
@@ -246,13 +246,17 @@ export default function ProductDetailPage() {
             thumbnail: primaryThumbnail,
             images: cleanImages,
             galleryImages: cleanImages,
-            colors: p.variants && p.variants.length > 0
+            colors: Array.isArray(p.colors) && p.colors.length > 0
+              ? p.colors.map((c: any) => (typeof c === 'string' ? { name: c, hex: '#000000' } : c))
+              : p.variants && p.variants.length > 0
               ? Array.from(new Set(p.variants.map((v: any) => v.color))).map((name: any) => ({
                   name: name || 'Standard',
                   hex: p.variants.find((v: any) => v.color === name)?.colorHex || '#000000',
                 }))
               : [{ name: 'Standard', hex: '#000000' }],
-            sizes: p.variants && p.variants.length > 0
+            sizes: Array.isArray(p.sizes) && p.sizes.length > 0
+              ? p.sizes
+              : p.variants && p.variants.length > 0
               ? Array.from(new Set(p.variants.map((v: any) => v.size)))
               : ['S', 'M', 'L', 'XL'],
             variants: p.variants || [],
@@ -372,14 +376,14 @@ export default function ProductDetailPage() {
   }, [product, selectedColor]);
 
   const sizeAvailability = useMemo(() => {
-    if (!product || !product.sizes) return [];
-    return (product.sizes || []).map((sizeName) => {
+    if (!product || !product.sizes || product.sizes.length === 0) return [];
+    return product.sizes.map((sizeName) => {
       const variant = availableVariantsForColor.find((v) => v.size === sizeName);
-      const stock = variant ? variant.stock : 0;
+      const stock = variant ? Number(variant.stock) || 0 : (product.stock > 0 ? product.stock : 10);
       return {
         size: sizeName,
         stock,
-        isOffered: !!variant,
+        isOffered: true,
         isInStock: stock > 0,
       };
     });
