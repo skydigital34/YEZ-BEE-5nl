@@ -97,6 +97,7 @@ export default function Header() {
 
             <Link
               href="/wishlist"
+              suppressHydrationWarning
               className={cn(
                 'relative hidden sm:flex rounded-full p-2.5 transition-all duration-200 hover:scale-105',
                 isSolidHeader
@@ -116,6 +117,7 @@ export default function Header() {
 
             <button
               onClick={handleUserClick}
+              suppressHydrationWarning
               className={cn(
                 'hidden sm:flex items-center gap-1.5 rounded-full p-2.5 transition-all duration-200 hover:scale-105',
                 isSolidHeader
@@ -135,6 +137,7 @@ export default function Header() {
 
             <Link
               href="/cart"
+              suppressHydrationWarning
               className={cn(
                 'relative rounded-full p-2.5 transition-all duration-200 hover:scale-105',
                 isSolidHeader

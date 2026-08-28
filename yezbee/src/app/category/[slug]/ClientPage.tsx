@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -14,7 +14,21 @@ import {
   Filter,
   ShoppingBag,
   ArrowRight,
+  Sparkles,
+  Maximize2,
+  Ruler,
+  Info,
+  Check,
 } from 'lucide-react';
+
+const SIZE_CHART_DATA = [
+  { size: 'S (36)', bust: '36"', waist: '32"', hip: '39"', length: '44"', shoulder: '14.5"' },
+  { size: 'M (38)', bust: '38"', waist: '34"', hip: '41"', length: '44"', shoulder: '15"' },
+  { size: 'L (40)', bust: '40"', waist: '36"', hip: '43"', length: '45"', shoulder: '15.5"' },
+  { size: 'XL (42)', bust: '42"', waist: '38"', hip: '45"', length: '45"', shoulder: '16"' },
+  { size: '2XL (44)', bust: '44"', waist: '40"', hip: '47"', length: '46"', shoulder: '16.5"' },
+  { size: '3XL (46)', bust: '46"', waist: '42"', hip: '49"', length: '46"', shoulder: '17"' },
+];
 import ProductCard from '@/components/ui/ProductCard';
 import {
   YEZBEE_CATEGORIES,
@@ -332,6 +346,7 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedFabrics, setSelectedFabrics] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
 
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
@@ -506,33 +521,74 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
 
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-2 text-xs text-white/60 mb-4 font-sans uppercase tracking-widest">
-              <Link href="/" className="hover:text-[var(--color-primary-gold)] transition-colors">Home</Link>
-              <span>/</span>
-              <Link href="/category/all" className="hover:text-[var(--color-primary-gold)] transition-colors">Categories</Link>
-              <span>/</span>
-              <span className="text-[var(--color-primary-gold)] font-bold">
-                {categoryConfig?.name || 'Catalog'}
-              </span>
-              {selectedProductType !== 'all' && (
-                <>
-                  <span>/</span>
-                  <span className="text-white font-bold">{selectedProductType}</span>
-                </>
-              )}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2 text-xs text-white/60 mb-4 font-sans uppercase tracking-widest">
+                <Link href="/" className="hover:text-[var(--color-primary-gold)] transition-colors">Home</Link>
+                <span>/</span>
+                <Link href="/category/all" className="hover:text-[var(--color-primary-gold)] transition-colors">Categories</Link>
+                <span>/</span>
+                <span className="text-[var(--color-primary-gold)] font-bold">
+                  {categoryConfig?.name || 'Catalog'}
+                </span>
+                {selectedProductType !== 'all' && (
+                  <>
+                    <span>/</span>
+                    <span className="text-white font-bold">{selectedProductType}</span>
+                  </>
+                )}
+              </div>
+
+              <h1 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight uppercase">
+                {categoryConfig?.name || 'All Products'}
+                {selectedProductType !== 'all' && (
+                  <span className="text-[var(--color-primary-gold)] ml-3 text-2xl sm:text-4xl">· {selectedProductType}</span>
+                )}
+              </h1>
+
+              <p className="mt-4 text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-xl">
+                {categoryConfig?.description || 'Explore our exclusive fashion collection handcrafted for elegance and comfort.'}
+              </p>
             </div>
 
-            <h1 className="font-display text-3xl sm:text-5xl font-bold text-white tracking-tight uppercase">
-              {categoryConfig?.name || 'All Products'}
-              {selectedProductType !== 'all' && (
-                <span className="text-[var(--color-primary-gold)] ml-3 text-2xl sm:text-4xl">· {selectedProductType}</span>
-              )}
-            </h1>
+            {/* Top Right Luxury Measurement Guide Widget */}
+            <div className="shrink-0 flex flex-col items-start lg:items-end">
+              <div
+                onClick={() => setIsSizeChartOpen(true)}
+                className="group relative bg-gradient-to-br from-black/90 via-zinc-900/95 to-black/95 backdrop-blur-xl border border-[var(--color-primary-gold)]/40 hover:border-[var(--color-primary-gold)] p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-300 shadow-2xl hover:shadow-[0_0_30px_rgba(212,175,55,0.25)] hover:scale-[1.02] max-w-xs sm:max-w-sm"
+              >
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[var(--color-gold-light)] bg-[var(--color-primary-gold)]/15 px-2.5 py-1 rounded-full border border-[var(--color-primary-gold)]/30">
+                    <Ruler size={13} className="text-[var(--color-primary-gold)]" /> Size & Fit Guide
+                  </span>
+                  <span className="text-[10px] font-semibold text-white/70 group-hover:text-white transition-colors flex items-center gap-1">
+                    Open Table <ArrowRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </div>
 
-            <p className="mt-4 text-xs sm:text-sm text-white/80 leading-relaxed font-sans max-w-xl">
-              {categoryConfig?.description || 'Explore our exclusive fashion collection handcrafted for elegance and comfort.'}
-            </p>
+                <div className="mb-3">
+                  <p className="text-xs font-bold text-white mb-2">Women & Maternity Size Specs</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {['S (36)', 'M (38)', 'L (40)', 'XL (42)', '2XL (44)', '3XL (46)'].map((sz) => (
+                      <span
+                        key={sz}
+                        className="px-2 py-1 text-center text-[10px] font-bold rounded-lg bg-white/10 text-white border border-white/15 group-hover:border-[var(--color-primary-gold)]/50 group-hover:bg-[var(--color-primary-gold)]/20 transition-all"
+                      >
+                        {sz}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-white/70 border-t border-white/10 pt-2 font-sans">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-[var(--color-primary-gold)] shrink-0" />
+                    Comfort Bump Fit Guide
+                  </span>
+                  <span className="text-[var(--color-primary-gold)] font-bold">Inches (in)</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -733,6 +789,124 @@ export function CategoryPageContent({ subSlug }: { subSlug?: string }) {
               >
                 Apply Filters
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Luxury Measurement Table Modal */}
+      <AnimatePresence>
+        {isSizeChartOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSizeChartOpen(false)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl w-full bg-[var(--color-warm-white)] rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden border border-[var(--color-primary-gold)]/40 max-h-[90vh] flex flex-col cursor-default"
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between pb-4 border-b border-[var(--color-champagne)]">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[var(--color-primary-gold)] mb-1">
+                    <Ruler size={14} /> YEZ BEE Official Size Chart
+                  </div>
+                  <h3 className="font-display font-bold text-2xl text-[var(--color-dark)]">
+                    Maternity & Women Measurement Guide
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsSizeChartOpen(false)}
+                  className="p-2 rounded-full bg-gray-100 hover:bg-[var(--color-dark)] hover:text-white text-gray-600 transition-all cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="overflow-y-auto py-5 space-y-5 flex-1 pr-1">
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 text-xs text-amber-900">
+                  <Info size={18} className="text-[var(--color-primary-gold)] shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Comfort & Bump Fit Advice:</p>
+                    <p className="mt-0.5 text-amber-800 leading-relaxed">
+                      All YEZ BEE maternity kurtis and feeding dresses are tailored with built-in belly ease. Order your pre-pregnancy bust size for the regular fit!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="overflow-x-auto rounded-2xl border border-[var(--color-champagne)] shadow-soft-sm bg-white">
+                  <table className="w-full text-left text-xs sm:text-sm font-sans border-collapse">
+                    <thead>
+                      <tr className="bg-[var(--color-dark)] text-white font-display text-xs uppercase tracking-wider">
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800">Size (IN)</th>
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800 text-center">Bust</th>
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800 text-center">Waist</th>
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800 text-center">Hip</th>
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800 text-center">Length</th>
+                        <th className="py-3.5 px-4 font-bold border-b border-gray-800 text-center">Shoulder</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {SIZE_CHART_DATA.map((row, idx) => (
+                        <tr
+                          key={row.size}
+                          className={`hover:bg-amber-50/60 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                        >
+                          <td className="py-3.5 px-4 font-bold text-[var(--color-dark)] flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[var(--color-primary-gold)]"></span>
+                            {row.size}
+                          </td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.bust}</td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.waist}</td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.hip}</td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.length}</td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-gray-800">{row.shoulder}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Collapsible reference chart */}
+                <details className="group bg-white rounded-2xl border border-gray-200 p-4">
+                  <summary className="font-bold text-xs uppercase tracking-wider text-[var(--color-dark)] cursor-pointer flex items-center justify-between">
+                    <span>View Uploaded Reference Image Chart</span>
+                    <span className="text-[var(--color-primary-gold)] group-open:rotate-180 transition-transform font-bold">▼</span>
+                  </summary>
+                  <div className="mt-4 relative w-full h-[45vh] bg-gray-50 rounded-xl overflow-hidden flex items-center justify-center border border-gray-100">
+                    <Image
+                      src="/images/image.png"
+                      alt="Reference Measurement Table"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                </details>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-[var(--color-champagne)] flex items-center justify-between text-xs text-gray-500 font-sans">
+                <span className="flex items-center gap-1.5 text-gray-700 font-medium">
+                  <Check size={14} className="text-emerald-600" /> Standard Indian Women Sizing (All measurements in Inches)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsSizeChartOpen(false)}
+                  className="px-6 py-2.5 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-full hover:bg-black transition-all shadow-md cursor-pointer"
+                >
+                  Close Guide
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

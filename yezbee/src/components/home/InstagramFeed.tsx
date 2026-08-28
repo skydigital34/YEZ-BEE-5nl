@@ -7,17 +7,17 @@ import Image from 'next/image';
 const INSTA_POSTS = [
   {
     id: 1,
-    image: '/images/hero/hero1.png',
+    image: '/images/instagram/insta1.jpg',
     tag: '#YEZBEELookbook',
   },
   {
     id: 2,
-    image: '/images/hero/hero2.png',
+    image: '/images/instagram/insta2.jpg',
     tag: '#MaternityStyle',
   },
   {
     id: 3,
-    image: '/images/hero/hero3.png',
+    image: '/images/instagram/insta3.jpg',
     tag: '#FestivalGlam',
   },
 ];
