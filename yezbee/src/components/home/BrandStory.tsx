@@ -24,7 +24,7 @@ export default function BrandStory() {
           <div className="lg:col-span-5 relative">
             <div className="relative aspect-[4/5] w-full max-w-md mx-auto lg:max-w-none overflow-hidden rounded-2xl shadow-soft-xl">
               <Image
-                src="/images/hero/hero2.png"
+                src="/images/about/about-main.png"
                 alt="Yez Bee Fashion Maternity & Feeding Fashion"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
@@ -43,7 +43,7 @@ export default function BrandStory() {
 
             <div className="hidden sm:block absolute -bottom-6 -right-4 w-48 h-56 overflow-hidden rounded-xl shadow-gold-lg border-2 border-white">
               <Image
-                src="/images/hero/hero1.png"
+                src="/images/about/about-sub.png"
                 alt="Yez Bee Fashion Everyday & Feeding Kurtis"
                 fill
                 sizes="200px"

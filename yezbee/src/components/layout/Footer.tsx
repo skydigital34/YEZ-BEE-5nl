@@ -2,13 +2,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
   Instagram,
-  Youtube,
   Facebook,
   MessageCircle,
   Mail,
   ChevronRight,
 } from 'lucide-react';
-import { FaPinterestP as Pinterest } from 'react-icons/fa';
 import { cn } from '@/lib/utils';
 
 const footerColumns = [
@@ -35,16 +33,6 @@ const footerColumns = [
     ],
   },
   {
-    title: 'COMPANY',
-    links: [
-      { label: 'About YEZ BEE', href: '/about' },
-      { label: 'Our Story', href: '/about' },
-      { label: 'Retail Outlets', href: '/contact' },
-      { label: 'Franchise Enquiry', href: '/contact' },
-      { label: 'Careers', href: '/careers' },
-    ],
-  },
-  {
     title: 'LEGAL',
     links: [
       { label: 'Privacy Policy', href: '/privacy' },
@@ -58,14 +46,12 @@ const footerColumns = [
 const socialLinks = [
   { icon: Instagram, href: 'https://www.instagram.com/yezbeefashion?igsi=MTRwZm1rNzdrc2h0bw==', label: 'Instagram' },
   { icon: Facebook, href: 'https://www.facebook.com/share/1GoBY9GSPB/', label: 'Facebook' },
-  { icon: Youtube, href: 'https://youtube.com', label: 'YouTube' },
-  { icon: Pinterest, href: 'https://pinterest.com', label: 'Pinterest' },
   { icon: MessageCircle, href: 'https://wa.me/918760890906', label: 'WhatsApp' },
 ];
 
 const paymentMethods = [
-  { name: 'Visa', gradient: 'from-blue-700 to-blue-500' },
-  { name: 'Mastercard', gradient: 'from-orange-600 to-red-500' },
+  { name: 'Visa', gradient: 'from-blue-900 to-blue-700' },
+  { name: 'Mastercard', gradient: 'from-orange-600 to-red-600' },
   { name: 'UPI', gradient: 'from-green-700 to-green-500' },
   { name: 'COD Available', gradient: 'from-purple-700 to-purple-500' },
   { name: '256-Bit SSL', gradient: 'from-blue-600 to-cyan-500' },
@@ -76,7 +62,7 @@ export default function Footer() {
     <footer className="bg-[var(--color-dark)] text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="py-16">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-1">
               <div className="mb-4">
                 <Link href="/" className="inline-block group">

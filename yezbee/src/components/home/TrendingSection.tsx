@@ -11,7 +11,7 @@ const TRENDS = [
     title: 'Peplum Tops & Waist Tunics',
     description: 'Sculpted silhouettes redefining modern casual glam with all-day comfort',
     slug: '/category/peplum-tops',
-    image: '/images/categories/peplum-tops.png',
+    image: '/images/categories/peplumtops.png',
   },
   {
     id: 2,
@@ -25,7 +25,7 @@ const TRENDS = [
     title: 'Party Wear & Festive Gowns',
     description: 'Festive grace and gold embellishments designed for celebrations',
     slug: '/category/party-wear',
-    image: '/images/categories/party-wear.png',
+    image: '/images/categories/partywear.png',
   },
 ];
 

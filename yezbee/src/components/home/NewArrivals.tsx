@@ -108,17 +108,7 @@ export default function NewArrivals() {
               <ProductCardSkeleton key={skel} />
             ))}
           </div>
-        ) : visibleProducts.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-3xl border border-gray-200/60 p-8 shadow-soft-sm">
-            <p className="text-sm font-semibold text-gray-500">No products found in "{selectedCategory}".</p>
-            <button
-              onClick={() => setSelectedCategory('All')}
-              className="mt-4 px-6 py-2.5 bg-[var(--color-dark)] text-white text-xs font-bold uppercase tracking-wider rounded-full hover:bg-[var(--color-primary-gold)] hover:text-[var(--color-dark)] transition-all cursor-pointer"
-            >
-              Show All Products
-            </button>
-          </div>
-        ) : (
+        ) : visibleProducts.length > 0 ? (
           <div
             ref={ref}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
@@ -150,16 +140,7 @@ export default function NewArrivals() {
               </motion.div>
             ))}
           </div>
-        )}
-
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/category/all"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[var(--color-dark)] text-white text-xs font-bold uppercase tracking-[0.2em] rounded-full hover:bg-[var(--color-primary-gold)] hover:text-[var(--color-dark)] transition-all shadow-md group"
-          >
-            Explore Full Catalog ({items.length} Items) <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </div>
+        ) : null}
       </div>
     </section>
   );

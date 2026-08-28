@@ -7,7 +7,6 @@ import FeaturedCollections from '@/components/home/FeaturedCollections'
 import NewArrivals from '@/components/home/NewArrivals'
 import FlashSale from '@/components/home/FlashSale'
 import TrendingSection from '@/components/home/TrendingSection'
-import BestSellers from '@/components/home/BestSellers'
 import BrandStory from '@/components/home/BrandStory'
 import WhyChooseUs from '@/components/home/WhyChooseUs'
 import InstagramFeed from '@/components/home/InstagramFeed'
@@ -34,9 +33,6 @@ export default function HomePage() {
       </motion.div>
       <motion.div {...fadeIn}>
         <TrendingSection />
-      </motion.div>
-      <motion.div {...fadeIn}>
-        <BestSellers />
       </motion.div>
       <motion.div {...fadeIn}>
         <BrandStory />

@@ -59,7 +59,7 @@ export default function EditorsPick() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             <div className="group relative flex-1 overflow-hidden rounded-2xl min-h-[250px] shadow-soft-md">
               <Image
-                src="/images/hero/hero2.png"
+                src="/images/hero/royal-festival.png"
                 alt="Royal Festival Edit"
                 fill
                 sizes="(max-width: 1024px) 100vw, 33vw"
@@ -84,7 +84,7 @@ export default function EditorsPick() {
 
             <div className="group relative flex-1 overflow-hidden rounded-2xl min-h-[250px] shadow-soft-md">
               <Image
-                src="/images/hero/hero3.png"
+                src="/images/hero/executive-power.png"
                 alt="Executive Power Tailoring"
                 fill
                 sizes="(max-width: 1024px) 100vw, 33vw"

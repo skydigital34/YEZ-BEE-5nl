@@ -18,7 +18,6 @@ import {
   Home,
   Grid,
   Instagram,
-  Youtube,
   Facebook,
   MessageCircle,
 } from 'lucide-react';
@@ -279,7 +278,6 @@ export function MobileMenu({ isOpen, onClose, onOpenSearch }: MobileMenuProps) {
             <div className="border-t border-[var(--color-champagne)] px-6 py-4 bg-white/60">
               <div className="flex items-center justify-around text-gray-500">
                 <a href="https://www.instagram.com/yezbeefashion?igsi=MTRwZm1rNzdrc2h0bw==" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-primary-gold)] transition-colors" aria-label="Instagram"><Instagram size={18} /></a>
-                <a href="#" className="hover:text-[var(--color-primary-gold)] transition-colors" aria-label="YouTube"><Youtube size={18} /></a>
                 <a href="https://www.facebook.com/share/1GoBY9GSPB/" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-primary-gold)] transition-colors" aria-label="Facebook"><Facebook size={18} /></a>
                 <a href="https://wa.me/918760890906" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--color-primary-gold)] transition-colors" aria-label="WhatsApp"><MessageCircle size={18} /></a>
               </div>
