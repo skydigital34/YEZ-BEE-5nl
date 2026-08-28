@@ -233,8 +233,9 @@ export const api = {
 
   getProduct: async (slug: string): Promise<any> => {
     try {
-      const { collection, getDocs, query, where } = await import('firebase/firestore');
+      const { collection, getDocs, query, where, doc, getDoc } = await import('firebase/firestore');
       const { db } = await import('./firebase');
+      
       const q = query(collection(db, 'products'), where('slug', '==', slug));
       const querySnapshot = await getDocs(q);
       
@@ -242,6 +243,14 @@ export const api = {
         const docSnap = querySnapshot.docs[0];
         return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } as any };
       }
+      
+      // Fallback: check if the 'slug' is actually a document ID
+      const docRef = doc(db, 'products', slug);
+      const docSnapById = await getDoc(docRef);
+      if (docSnapById.exists()) {
+        return { success: true, data: { _id: docSnapById.id, id: docSnapById.id, ...docSnapById.data() } as any };
+      }
+      
       return { success: false, data: null };
     } catch(e) {
       console.error(e);
