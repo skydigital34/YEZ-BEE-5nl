@@ -109,7 +109,7 @@ export default function Hero() {
 
   return (
     <section
-      className="relative w-full h-[480px] sm:h-[540px] md:h-[580px] lg:h-[620px] overflow-hidden text-white transition-colors duration-700"
+      className="relative w-full h-[580px] sm:h-[680px] md:h-[760px] lg:h-[840px] overflow-hidden text-white transition-colors duration-700"
       style={{ backgroundColor: slide.bg }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
