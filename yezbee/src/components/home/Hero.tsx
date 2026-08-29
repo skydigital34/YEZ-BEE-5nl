@@ -21,7 +21,7 @@ const slides = [
     image: '/images/hero/slide1.png',
     alt: 'Best maternity kurtis and kurti sets for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-contain object-right py-2 sm:py-4',
+    imagePosition: 'object-cover object-[75%_15%]',
     bg: '#E2D7CB',
   },
   {
@@ -37,7 +37,7 @@ const slides = [
     image: '/images/hero/slide2.png',
     alt: 'Best pregnancy dresses for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-contain object-right py-2 sm:py-4',
+    imagePosition: 'object-cover object-[75%_15%]',
     bg: '#E5E5E5',
   },
   {
@@ -53,7 +53,7 @@ const slides = [
     image: '/images/hero/slide3.png',
     alt: 'Feeding and non feeding dress online - YEZ BEE',
     align: 'right',
-    imagePosition: 'object-contain object-left py-2 sm:py-4',
+    imagePosition: 'object-cover object-[25%_15%]',
     bg: '#CBB8A9',
   },
   {
@@ -69,7 +69,7 @@ const slides = [
     image: '/images/hero/slide4.png',
     alt: 'Flat 10% OFF offer on YEZ BEE maternity and feeding dresses',
     align: 'right',
-    imagePosition: 'object-contain object-left py-2 sm:py-4',
+    imagePosition: 'object-cover object-[25%_15%]',
     bg: '#DFD7CE',
   },
 ];
@@ -125,16 +125,7 @@ export default function Hero() {
           className="absolute inset-0 z-0"
           style={{ backgroundColor: slide.bg }}
         >
-          {/* Edge-to-edge backdrop photo covering 100% of screen width */}
-          <Image
-            src={slide.image}
-            alt=""
-            fill
-            aria-hidden="true"
-            className="object-cover opacity-90"
-          />
-
-          {/* Full uncropped foreground model image */}
+          {/* Single clean slide image */}
           <Image
             src={slide.image}
             alt={slide.alt}
