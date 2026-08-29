@@ -21,7 +21,7 @@ const slides = [
     image: '/images/hero/slide1.png',
     alt: 'Best maternity kurtis and kurti sets for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-[80%_center]',
+    imagePosition: 'object-contain object-right py-2 sm:py-4',
     bg: '#E2D7CB',
   },
   {
@@ -37,8 +37,8 @@ const slides = [
     image: '/images/hero/slide2.png',
     alt: 'Best pregnancy dresses for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-[80%_center]',
-    bg: '#FAF7F2',
+    imagePosition: 'object-contain object-right py-2 sm:py-4',
+    bg: '#E5E5E5',
   },
   {
     id: 3,
@@ -53,8 +53,8 @@ const slides = [
     image: '/images/hero/slide3.png',
     alt: 'Feeding and non feeding dress online - YEZ BEE',
     align: 'right',
-    imagePosition: 'object-[20%_center]',
-    bg: '#201914',
+    imagePosition: 'object-contain object-left py-2 sm:py-4',
+    bg: '#CBB8A9',
   },
   {
     id: 4,
@@ -68,9 +68,9 @@ const slides = [
     secondaryHref: '/sale',
     image: '/images/hero/slide4.png',
     alt: 'Flat 10% OFF offer on YEZ BEE maternity and feeding dresses',
-    align: 'left',
-    imagePosition: 'object-[80%_center]',
-    bg: '#F5F5F7',
+    align: 'right',
+    imagePosition: 'object-contain object-left py-2 sm:py-4',
+    bg: '#DFD7CE',
   },
 ];
 
@@ -109,7 +109,8 @@ export default function Hero() {
 
   return (
     <section
-      className="relative w-full h-[480px] sm:h-[540px] md:h-[580px] lg:h-[620px] overflow-hidden bg-black text-white"
+      className="relative w-full h-[480px] sm:h-[540px] md:h-[580px] lg:h-[620px] overflow-hidden text-white transition-colors duration-700"
+      style={{ backgroundColor: slide.bg }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       aria-label="Maternity Dress Campaign"
@@ -124,6 +125,16 @@ export default function Hero() {
           className="absolute inset-0 z-0"
           style={{ backgroundColor: slide.bg }}
         >
+          {/* Edge-to-edge backdrop photo covering 100% of screen width */}
+          <Image
+            src={slide.image}
+            alt=""
+            fill
+            aria-hidden="true"
+            className="object-cover opacity-90"
+          />
+
+          {/* Full uncropped foreground model image */}
           <Image
             src={slide.image}
             alt={slide.alt}
@@ -131,15 +142,15 @@ export default function Hero() {
             priority
             loading="eager"
             sizes="100vw"
-            className={cn('object-cover transition-transform duration-1000', slide.imagePosition)}
+            className={cn('transition-transform duration-1000', slide.imagePosition)}
           />
 
           <div
             className={cn(
               'absolute inset-0 z-10 pointer-events-none',
               slide.align === 'left'
-                ? 'bg-gradient-to-r from-black/90 via-black/50 via-40% to-transparent'
-                : 'bg-gradient-to-l from-black/90 via-black/50 via-40% to-transparent'
+                ? 'bg-gradient-to-r from-black/85 via-black/40 via-50% to-transparent'
+                : 'bg-gradient-to-l from-black/85 via-black/40 via-50% to-transparent'
             )}
           />
           <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/85 via-black/30 to-transparent sm:hidden pointer-events-none" />
