@@ -1,38 +1,55 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import {
+  initAdminUserInDB,
+  verifyAdminLogin,
+  saveAdminSession,
+} from '@/lib/adminAuth'
 
 export default function AdminLoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
   const [loading, setLoading] = useState(false)
   const [remember, setRemember] = useState(false)
+
+  useEffect(() => {
+    // Ensure default admin user exists in Firestore database upon mounting login page
+    initAdminUserInDB()
+  }, [])
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {}
     if (!email) newErrors.email = 'Email is required'
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email format'
     if (!password) newErrors.password = 'Password is required'
-    else if (password.length < 8) newErrors.password = 'Password must be at least 8 characters'
+    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setErrors({})
+
+    const res = await verifyAdminLogin(email, password)
+    setLoading(false)
+
+    if (res.success && res.admin) {
+      saveAdminSession(res.admin, remember)
       router.push('/admin')
-    }, 1500)
+    } else {
+      setErrors({ general: res.error || 'Invalid database credentials' })
+    }
   }
 
   return (
@@ -66,15 +83,26 @@ export default function AdminLoginPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-center mb-8"
+              className="text-center mb-6"
             >
               <h1 className="text-2xl font-semibold text-[#1A1A1A] tracking-tight">
-                Welcome back
+                Admin Portal Login
               </h1>
               <p className="text-gray-500 text-sm mt-1.5">
-                Sign in to your admin dashboard
+                Sign in with your database-managed admin account
               </p>
             </motion.div>
+
+            {errors.general && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 flex items-center gap-2"
+              >
+                <AlertCircle size={16} className="shrink-0" />
+                <span>{errors.general}</span>
+              </motion.div>
+            )}
 
             <motion.form
               initial={{ opacity: 0 }}
@@ -93,7 +121,7 @@ export default function AdminLoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })) }}
-                    placeholder="admin@yezbee.com"
+                    placeholder="sbfashionamazon@gmail.com"
                     className={`w-full pl-10 pr-4 py-2.5 bg-[#FAF7F2] rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                       errors.email ? 'ring-2 ring-red-300 bg-red-50' : 'focus:ring-[#C9A84C]/30 focus:bg-white'
                     }`}

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import {
   DollarSign, ShoppingBag, Users, TrendingUp, Package,
-  Plus, Eye, BarChart3, ExternalLink, Clock, ChevronRight
+  Plus, Eye, FolderTree, ExternalLink, Clock, ChevronRight
 } from 'lucide-react'
 import StatCard from '@/components/admin/StatCard'
 import Chart from '@/components/admin/Chart'
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
         {[
           { icon: Plus, label: 'Add Product', href: '/admin/products/create', desc: 'Add new product to catalog' },
           { icon: Eye, label: 'View Orders', href: '/admin/orders', desc: 'Manage incoming orders' },
-          { icon: BarChart3, label: 'View Analytics', href: '/admin/analytics', desc: 'See detailed reports' },
+          { icon: FolderTree, label: 'Categories', href: '/admin/categories', desc: 'Manage product categories' },
         ].map((action) => (
           <Link key={action.label} href={action.href}>
             <motion.div

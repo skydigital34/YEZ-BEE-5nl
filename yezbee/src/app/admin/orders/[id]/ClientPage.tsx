@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
+import { api } from '@/lib/api'
 import {
   ArrowLeft, Printer, Send, XCircle, ChevronDown,
   Package, CreditCard, MapPin, User, Clock, AlertCircle,
@@ -83,10 +84,67 @@ const timelineIcons: Record<string, React.ElementType> = {
 export default function OrderDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const orderId = params?.id as string
+
+  const [realOrder, setRealOrder] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<typeof statuses[number]>(orderData.status as typeof statuses[number])
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
+
+  useEffect(() => {
+    if (!orderId) return
+    api.getOrder(orderId).then((res) => {
+      if (res && res.success && res.data) {
+        setRealOrder(res.data)
+        if (res.data.status) setStatus(res.data.status)
+      }
+    }).finally(() => setLoading(false))
+  }, [orderId])
+
+  const activeData = realOrder ? {
+    id: realOrder.id || realOrder._id || orderId,
+    date: realOrder.createdAt || new Date().toISOString(),
+    status: realOrder.status || 'pending',
+    payment: realOrder.payment || 'unpaid',
+    paymentMethod: realOrder.paymentMethod || 'Razorpay / Online',
+    subtotal: realOrder.totalAmount || 0,
+    shipping: 0,
+    discount: 0,
+    tax: 0,
+    total: realOrder.totalAmount || 0,
+    notes: realOrder.notes || 'Order placed online.',
+    customer: {
+      name: realOrder.shippingAddress ? `${realOrder.shippingAddress.firstName} ${realOrder.shippingAddress.lastName || ''}`.trim() : 'Customer',
+      email: realOrder.shippingAddress?.email || 'N/A',
+      phone: realOrder.shippingAddress?.phone || 'N/A',
+      ordersCount: 1,
+      joinedDate: realOrder.createdAt || new Date().toISOString(),
+    },
+    shippingAddress: {
+      line1: realOrder.shippingAddress?.address1 || 'Address Line',
+      line2: realOrder.shippingAddress?.address2 || '',
+      city: realOrder.shippingAddress?.city || '',
+      state: realOrder.shippingAddress?.state || '',
+      pincode: realOrder.shippingAddress?.pincode || '',
+      country: 'India',
+    },
+    items: Array.isArray(realOrder.items) && realOrder.items.length > 0
+      ? realOrder.items.map((it: any, idx: number) => ({
+          id: idx + 1,
+          name: it.name || 'Product',
+          sku: it.product || `SKU-${idx}`,
+          price: it.price || 0,
+          quantity: it.quantity || 1,
+          image: it.image || '',
+        }))
+      : orderData.items,
+    timeline: [
+      { action: 'Order Placed', timestamp: realOrder.createdAt || new Date().toISOString(), user: realOrder.shippingAddress?.firstName || 'Customer', note: '' },
+      { action: 'Payment Received', timestamp: realOrder.createdAt || new Date().toISOString(), user: 'System', note: `${realOrder.paymentMethod || 'Online'} Payment` },
+    ],
+  } : orderData
 
   return (
     <motion.div
@@ -104,13 +162,13 @@ export default function OrderDetailPage() {
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold text-[#1A1A1A] tracking-tight">{orderData.id}</h1>
+              <h1 className="text-2xl font-semibold text-[#1A1A1A] tracking-tight">{activeData.id}</h1>
               <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium border capitalize ${statusColors[status]}`}>
                 {status}
               </span>
             </div>
             <p className="text-gray-500 text-sm mt-0.5">
-              Placed on {new Date(orderData.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              Placed on {new Date(activeData.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
         </div>
@@ -153,11 +211,11 @@ export default function OrderDetailPage() {
             <div className="p-6 pb-4 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <Package size={16} className="text-[#C9A84C]" />
-                Order Items ({orderData.items.length})
+                Order Items ({activeData.items.length})
               </h3>
             </div>
             <div className="divide-y divide-gray-50">
-              {orderData.items.map((item) => (
+              {activeData.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-[#FAF7F2] transition-colors">
                   <div className="w-14 h-14 bg-[#F5E6C8]/30 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {item.image ? (
@@ -181,25 +239,25 @@ export default function OrderDetailPage() {
               <div className="space-y-2 text-sm max-w-xs ml-auto">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span className="text-gray-900">₹{orderData.subtotal.toLocaleString()}</span>
+                  <span className="text-gray-900">₹{activeData.subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span className="text-green-600">{orderData.shipping === 0 ? 'Free' : `₹${orderData.shipping.toLocaleString()}`}</span>
+                  <span className="text-green-600">{activeData.shipping === 0 ? 'Free' : `₹${activeData.shipping.toLocaleString()}`}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Tax (18%)</span>
-                  <span className="text-gray-900">₹{orderData.tax.toLocaleString()}</span>
+                  <span className="text-gray-900">₹{activeData.tax.toLocaleString()}</span>
                 </div>
-                {orderData.discount > 0 && (
+                {activeData.discount > 0 && (
                   <div className="flex justify-between text-gray-600">
                     <span>Discount</span>
-                    <span className="text-green-600">-₹{orderData.discount.toLocaleString()}</span>
+                    <span className="text-green-600">-₹{activeData.discount.toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-semibold text-gray-900 pt-2 border-t border-gray-200">
                   <span>Total</span>
-                  <span>₹{orderData.total.toLocaleString()}</span>
+                  <span>₹{activeData.total.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -218,7 +276,7 @@ export default function OrderDetailPage() {
             <div className="relative">
               <div className="absolute left-3.5 top-2 bottom-2 w-px bg-gray-100" />
               <div className="space-y-5">
-                {orderData.timeline.map((event, i) => {
+                {activeData.timeline.map((event, i) => {
                   const Icon = timelineIcons[event.action] || Clock
                   return (
                     <motion.div
@@ -265,25 +323,25 @@ export default function OrderDetailPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#C9A84C] to-[#A8882E] rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                  {orderData.customer.name.split(' ').map(n => n[0]).join('')}
+                  {activeData.customer.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{orderData.customer.name}</p>
-                  <p className="text-xs text-gray-400">{orderData.customer.ordersCount} orders</p>
+                  <p className="text-sm font-medium text-gray-900">{activeData.customer.name}</p>
+                  <p className="text-xs text-gray-400">{activeData.customer.ordersCount} orders</p>
                 </div>
               </div>
               <div className="pt-2 space-y-1.5">
                 <p className="text-xs text-gray-500 flex items-center gap-2">
                   <Send size={12} className="text-gray-300" />
-                  {orderData.customer.email}
+                  {activeData.customer.email}
                 </p>
                 <p className="text-xs text-gray-500 flex items-center gap-2">
                   <FileText size={12} className="text-gray-300" />
-                  {orderData.customer.phone}
+                  {activeData.customer.phone}
                 </p>
                 <p className="text-xs text-gray-500 flex items-center gap-2">
                   <Clock size={12} className="text-gray-300" />
-                  Customer since {new Date(orderData.customer.joinedDate).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+                  Customer since {new Date(activeData.customer.joinedDate).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
                 </p>
               </div>
             </div>
@@ -300,12 +358,12 @@ export default function OrderDetailPage() {
               Shipping Address
             </h3>
             <div className="text-sm text-gray-600 space-y-0.5">
-              <p className="font-medium text-gray-900">{orderData.customer.name}</p>
-              <p>{orderData.shippingAddress.line1}</p>
-              <p>{orderData.shippingAddress.line2}</p>
-              <p>{orderData.shippingAddress.city}, {orderData.shippingAddress.state}</p>
-              <p>{orderData.shippingAddress.pincode}</p>
-              <p>{orderData.shippingAddress.country}</p>
+              <p className="font-medium text-gray-900">{activeData.customer.name}</p>
+              <p>{activeData.shippingAddress.line1}</p>
+              <p>{activeData.shippingAddress.line2}</p>
+              <p>{activeData.shippingAddress.city}, {activeData.shippingAddress.state}</p>
+              <p>{activeData.shippingAddress.pincode}</p>
+              <p>{activeData.shippingAddress.country}</p>
             </div>
           </motion.div>
 
@@ -322,17 +380,17 @@ export default function OrderDetailPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Method</span>
-                <span className="font-medium text-gray-900">{orderData.paymentMethod}</span>
+                <span className="font-medium text-gray-900">{activeData.paymentMethod}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Status</span>
-                <span className={`font-medium capitalize ${orderData.payment === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
-                  {orderData.payment}
+                <span className={`font-medium capitalize ${activeData.payment === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                  {activeData.payment}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Total</span>
-                <span className="font-semibold text-gray-900">₹{orderData.total.toLocaleString()}</span>
+                <span className="font-semibold text-gray-900">₹{activeData.total.toLocaleString()}</span>
               </div>
             </div>
           </motion.div>
@@ -372,11 +430,11 @@ export default function OrderDetailPage() {
                 </motion.div>
               )}
             </div>
-            {orderData.notes && (
+            {activeData.notes && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <p className="text-xs text-gray-500 flex items-start gap-1.5">
                   <AlertCircle size={12} className="text-[#C9A84C] mt-0.5 flex-shrink-0" />
-                  <span>{orderData.notes}</span>
+                  <span>{activeData.notes}</span>
                 </p>
               </div>
             )}

@@ -6,11 +6,12 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Package, ShoppingBag, Users, FolderTree,
-  TicketPercent, Star, BarChart3,
   Search, Settings,
   Menu, X, Bell, LogOut, User,
   ChevronDown, PanelRightClose, PanelRightOpen
 } from 'lucide-react'
+
+import { getAdminSession, clearAdminSession, AdminUser } from '@/lib/adminAuth'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -38,9 +39,6 @@ const navItems = [
   { icon: ShoppingBag, label: 'Orders', href: '/admin/orders' },
   { icon: Users, label: 'Customers', href: '/admin/customers' },
   { icon: FolderTree, label: 'Categories', href: '/admin/categories' },
-  { icon: TicketPercent, label: 'Coupons', href: '/admin/coupons' },
-  { icon: Star, label: 'Reviews', href: '/admin/reviews' },
-  { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
 ]
 
 const SubNav = ({ item, collapsed }: { item: typeof navItems[number], collapsed: boolean }) => {
@@ -83,6 +81,28 @@ const SubNav = ({ item, collapsed }: { item: typeof navItems[number], collapsed:
   )
 }
 
+import { api } from '@/lib/api'
+
+interface NotificationItem {
+  id: string;
+  orderId: string;
+  text: string;
+  time: string;
+  unread: boolean;
+}
+
+function getTimeAgo(dateStr?: string): string {
+  if (!dateStr) return 'Recently';
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -92,27 +112,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [notifOpen, setNotifOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const [notifications, setNotifications] = useState<NotificationItem[]>([])
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    const session = getAdminSession()
+    if (session) {
+      setAdminUser(session)
+    } else if (pathname !== '/admin/login') {
+      router.push('/admin/login')
+    }
+    setAuthChecked(true)
+  }, [pathname, router])
 
-  const auth: AuthContextType = {
-    isAuthenticated: true,
-    isAdmin: true,
-    adminName: 'Aarav Mehta',
-    adminEmail: 'aarav@yezbee.com',
-    adminAvatar: '',
-    logout: () => { router.push('/admin/login') },
+  // Fetch real order notifications from Firebase Firestore
+  useEffect(() => {
+    if (pathname === '/admin/login') return
+    let mounted = true
+    const fetchNotifs = async () => {
+      try {
+        const res = await api.getOrders()
+        if (res && res.success && Array.isArray(res.data) && mounted) {
+          const notifs: NotificationItem[] = res.data.map((order: any) => {
+            const customerName = order.shippingAddress
+              ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim()
+              : 'Customer'
+            const orderNum = (order.id || order._id || '').slice(0, 8).toUpperCase()
+            const total = order.totalAmount ? `₹${order.totalAmount.toLocaleString()}` : ''
+
+            return {
+              id: order.id || order._id,
+              orderId: order.id || order._id,
+              text: `New Order #${orderNum} from ${customerName} (${total})`,
+              time: getTimeAgo(order.createdAt),
+              unread: order.status === 'pending' || order.payment === 'unpaid',
+            }
+          })
+          setNotifications(notifs)
+        }
+      } catch (err) {
+        console.error('Failed to load order notifications:', err)
+      }
+    }
+    fetchNotifs()
+    return () => { mounted = false }
+  }, [pathname])
+
+  const handleLogout = () => {
+    clearAdminSession()
+    setAdminUser(null)
+    router.push('/admin/login')
   }
 
-  const notifications = [
-    { id: 1, text: 'New order #ORD-2026-0042 from Priya Sharma', time: '2 min ago', unread: true },
-    { id: 2, text: 'Low stock alert: "Silk Evening Gown" (3 left)', time: '15 min ago', unread: true },
-    { id: 3, text: 'Payment received for order #ORD-2026-0039', time: '1 hour ago', unread: false },
-    { id: 4, text: 'New customer registered: Ananya Gupta', time: '3 hours ago', unread: false },
-    { id: 5, text: 'Review pending: "Velvet Blazer" - 4 stars', time: '5 hours ago', unread: false },
-  ]
+  const auth: AuthContextType = {
+    isAuthenticated: !!adminUser,
+    isAdmin: true,
+    adminName: adminUser?.name || 'SB Fashion Admin',
+    adminEmail: adminUser?.email || 'sbfashionamazon@gmail.com',
+    adminAvatar: '',
+    logout: handleLogout,
+  }
 
   const unreadCount = notifications.filter(n => n.unread).length
 
@@ -265,21 +326,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           <p className="text-sm font-semibold text-gray-900">Notifications</p>
                         </div>
                         <div className="max-h-80 overflow-y-auto">
-                          {notifications.map((n) => (
-                            <div
-                              key={n.id}
-                              className={`px-4 py-3 hover:bg-[#FAF7F2] cursor-pointer transition-colors ${
-                                n.unread ? 'bg-[#F5E6C8]/20 border-l-2 border-[#C9A84C]' : ''
-                              }`}
-                            >
-                              <p className="text-sm text-gray-700">{n.text}</p>
-                              <p className="text-xs text-gray-400 mt-1">{n.time}</p>
+                          {notifications.length === 0 ? (
+                            <div className="px-4 py-8 text-center text-xs text-gray-400">
+                              No order notifications yet
                             </div>
-                          ))}
+                          ) : (
+                            notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => {
+                                  setNotifOpen(false)
+                                  router.push(`/admin/orders/${n.orderId}`)
+                                }}
+                                className={`px-4 py-3 hover:bg-[#FAF7F2] cursor-pointer transition-colors ${
+                                  n.unread ? 'bg-[#F5E6C8]/20 border-l-2 border-[#C9A84C]' : ''
+                                }`}
+                              >
+                                <p className="text-sm text-gray-700">{n.text}</p>
+                                <p className="text-xs text-gray-400 mt-1">{n.time}</p>
+                              </div>
+                            ))
+                          )}
                         </div>
                         <div className="p-3 border-t border-gray-100 text-center">
-                          <button className="text-xs text-[#C9A84C] font-medium hover:underline" suppressHydrationWarning>
-                            View all notifications
+                          <button
+                            onClick={() => {
+                              setNotifOpen(false)
+                              router.push('/admin/orders')
+                            }}
+                            className="text-xs text-[#C9A84C] font-medium hover:underline"
+                            suppressHydrationWarning
+                          >
+                            View all orders
                           </button>
                         </div>
                       </motion.div>
