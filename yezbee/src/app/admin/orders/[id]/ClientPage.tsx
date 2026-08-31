@@ -95,10 +95,11 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     if (!orderId) return
-    api.getOrder(orderId).then((res) => {
+    api.getOrder(orderId).then((res: any) => {
       if (res && res.success && res.data) {
-        setRealOrder(res.data)
-        if (res.data.status) setStatus(res.data.status)
+        const orderDoc: any = res.data
+        setRealOrder(orderDoc)
+        if (orderDoc.status) setStatus(orderDoc.status)
       }
     }).finally(() => setLoading(false))
   }, [orderId])
@@ -215,7 +216,7 @@ export default function OrderDetailPage() {
               </h3>
             </div>
             <div className="divide-y divide-gray-50">
-              {activeData.items.map((item) => (
+              {activeData.items.map((item: any) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-[#FAF7F2] transition-colors">
                   <div className="w-14 h-14 bg-[#F5E6C8]/30 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {item.image ? (
@@ -276,7 +277,7 @@ export default function OrderDetailPage() {
             <div className="relative">
               <div className="absolute left-3.5 top-2 bottom-2 w-px bg-gray-100" />
               <div className="space-y-5">
-                {activeData.timeline.map((event, i) => {
+                {activeData.timeline.map((event: any, i: number) => {
                   const Icon = timelineIcons[event.action] || Clock
                   return (
                     <motion.div
@@ -323,7 +324,7 @@ export default function OrderDetailPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#C9A84C] to-[#A8882E] rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                  {activeData.customer.name.split(' ').map(n => n[0]).join('')}
+                  {activeData.customer.name.split(' ').map((n: string) => n[0]).join('')}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">{activeData.customer.name}</p>
@@ -416,7 +417,7 @@ export default function OrderDetailPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-gray-100 shadow-xl z-10 overflow-hidden"
                 >
-                  {statuses.map((s) => (
+                  {statuses.map((s: string) => (
                     <button
                       key={s}
                       onClick={() => { setStatus(s); setShowStatusDropdown(false) }}

@@ -547,7 +547,7 @@ export const api = {
     }
   },
 
-  getOrder: async (id: string) => {
+  getOrder: async (id: string): Promise<any> => {
     try {
       const { doc, getDoc } = await import('firebase/firestore');
       const { db } = await import('./firebase');
