@@ -227,23 +227,6 @@ export function MegaMenu({ scrolled, onActiveChange }: MegaMenuProps) {
 
         <li className="relative">
           <Link
-            href="/track-order"
-            className={cn(
-              'px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-200 rounded-full inline-flex items-center gap-1.5',
-              isTrackOrder
-                ? 'text-[var(--color-primary-gold)] font-extrabold'
-                : scrolled
-                ? 'text-[var(--color-dark)] hover:text-[var(--color-primary-gold)]'
-                : 'text-white hover:text-[var(--color-gold-light)]'
-            )}
-          >
-            <Package size={13} className="opacity-70" />
-            TRACK ORDER
-          </Link>
-        </li>
-
-        <li className="relative">
-          <Link
             href="/contact"
             className={cn(
               'px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-200 rounded-full inline-flex items-center gap-1.5',

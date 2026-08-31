@@ -189,20 +189,6 @@ export function MobileMenu({ isOpen, onClose, onOpenSearch }: MobileMenuProps) {
                 </Link>
 
                 <Link
-                  href="/track-order"
-                  onClick={onClose}
-                  className={cn(
-                    'flex items-center gap-3 py-3 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors',
-                    pathname === '/track-order'
-                      ? 'bg-[var(--color-dark)] text-white'
-                      : 'text-[var(--color-dark)] hover:bg-[var(--color-champagne)]/50'
-                  )}
-                >
-                  <Package size={16} />
-                  <span>TRACK ORDER</span>
-                </Link>
-
-                <Link
                   href="/contact"
                   onClick={onClose}
                   className={cn(
