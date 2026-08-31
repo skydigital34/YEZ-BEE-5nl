@@ -88,7 +88,7 @@ export default function OrderDetailPage() {
 
   const [realOrder, setRealOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState<typeof statuses[number]>(orderData.status as typeof statuses[number])
+  const [status, setStatus] = useState<string>(orderData.status)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -164,7 +164,7 @@ export default function OrderDetailPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-semibold text-[#1A1A1A] tracking-tight">{activeData.id}</h1>
-              <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium border capitalize ${statusColors[status]}`}>
+              <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium border capitalize ${statusColors[status] || 'bg-gray-100 text-gray-700'}`}>
                 {status}
               </span>
             </div>
