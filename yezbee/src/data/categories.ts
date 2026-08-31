@@ -20,7 +20,7 @@ export const CATEGORY_CONFIG = {
     subcategories: ["feeding", "non-feeding"]
   },
   "kids-wear": {
-    label: "Kids Wear",
+    label: "Kids Sets",
     subcategories: []
   }
 } as const;
@@ -144,8 +144,8 @@ export const YEZBEE_CATEGORIES: CategoryConfig[] = [
     slug: 'lounge-wear',
     path: '/category/lounge-wear',
     description: 'Relaxed fits, ultra-soft nightwear, and comfortable sets.',
-    image: '/images/categories/loungewear.png',
-    banner: '/images/categories/loungewear.png',
+    image: '/images/image copy 3.png',
+    banner: '/images/image copy 3.png',
     sortOrder: 4,
     hasFeedingSplit: false,
     subcategories: [],
@@ -181,12 +181,12 @@ export const YEZBEE_CATEGORIES: CategoryConfig[] = [
   },
   {
     id: 'kids-wear',
-    name: 'KIDS WEAR',
+    name: 'KIDS SETS',
     slug: 'kids-wear',
     path: '/category/kids-wear',
     description: 'Adorable, soft, and playful clothing for the little ones.',
-    image: '/images/image copy.png',
-    banner: '/images/image copy.png',
+    image: '/images/image copy 2.png',
+    banner: '/images/image copy 2.png',
     sortOrder: 6,
     hasFeedingSplit: false,
     subcategories: [],

@@ -255,7 +255,7 @@ export default function CategoriesPage() {
         <div>
           <p className="font-bold">Official Category Structure Enforced</p>
           <p className="text-amber-800 mt-0.5">
-            The catalog is locked to the 6 primary YEZ BEE categories: <strong>CASUALS, PARTY WEAR, ETHNIC WEAR, LOUNGE WEAR, PEPLUM TOPS, KIDS WEAR</strong>. 
+            The catalog is locked to the 6 primary YEZ BEE categories: <strong>CASUALS, PARTY WEAR, ETHNIC WEAR, LOUNGE WEAR, PEPLUM TOPS, KIDS SETS</strong>. 
             Feeding/Non-Feeding subcategories are automatically derived from product classifications.
           </p>
         </div>

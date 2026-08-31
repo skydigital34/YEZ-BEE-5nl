@@ -18,7 +18,7 @@ const footerColumns = [
       { label: 'ETHNIC WEAR', href: '/category/ethnic-wear' },
       { label: 'LOUNGE WEAR', href: '/category/lounge-wear' },
       { label: 'PEPLUM TOPS', href: '/category/peplum-tops' },
-      { label: 'KIDS WEAR', href: '/category/kids-wear' },
+      { label: 'KIDS SETS', href: '/category/kids-wear' },
     ],
   },
   {

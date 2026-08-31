@@ -83,7 +83,7 @@ export function getCategoryNameBySlug(slug: string): string {
     'ethnic-wear': 'ETHNIC WEAR',
     'lounge-wear': 'LOUNGE WEAR',
     'peplum-tops': 'PEPLUM TOPS',
-    'kids-wear': 'KIDS WEAR',
+    'kids-wear': 'KIDS SETS',
   };
   return map[slug] || 'CASUALS';
 }

@@ -45,7 +45,7 @@ const CATEGORY_ITEMS = [
   { label: 'PEPLUM TOPS', href: '/category/peplum-tops' },
   { label: '  ↳ FEEDING', href: '/category/peplum-tops/feeding' },
   { label: '  ↳ NON-FEEDING', href: '/category/peplum-tops/non-feeding' },
-  { label: 'KIDS WEAR', href: '/category/kids-wear' },
+  { label: 'KIDS SETS', href: '/category/kids-wear' },
 ];
 
 export function MobileMenu({ isOpen, onClose, onOpenSearch }: MobileMenuProps) {

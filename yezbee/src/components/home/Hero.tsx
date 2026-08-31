@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, HeartHandshake } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 const slides = [
@@ -18,11 +18,19 @@ const slides = [
     primaryHref: '/category/ethnic-wear',
     secondaryCta: 'EXPLORE ALL KURTIS',
     secondaryHref: '/category/casuals',
-    image: '/images/hero/slide1.png',
+    image: '/images/herohalf/slide1.png',
     alt: 'Best maternity kurtis and kurti sets for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-cover object-[75%_15%]',
-    bg: '#E2D7CB',
+    imagePosition: 'object-cover object-[70%_0%]',
+    imageContainerClass: 'w-full sm:w-1/2 lg:w-1/2',
+    bg: '#B5B6B7',
+    ambientGlow: 'radial-gradient(circle at 75% 50%, rgba(255, 235, 204, 0.45) 0%, rgba(212, 175, 55, 0.15) 35%, transparent 70%)',
+    floatingBadge: {
+      title: 'Concealed Feeding Zip',
+      subtitle: '100% Ultra-Soft Cotton',
+      rating: '4.9 ★★★★★',
+    },
+    features: ['Discrete 2-Way Zips', 'Bump-Friendly Fit', '100% Soft Cotton'],
   },
   {
     id: 2,
@@ -34,11 +42,19 @@ const slides = [
     primaryHref: '/category/ethnic-wear',
     secondaryCta: 'SHOP FEEDING WEAR',
     secondaryHref: '/category/casuals/feeding',
-    image: '/images/hero/slide2.png',
+    image: '/images/herohalf/image.png',
     alt: 'Best pregnancy dresses for women online - YEZ BEE',
     align: 'left',
-    imagePosition: 'object-cover object-[75%_15%]',
-    bg: '#E5E5E5',
+    imagePosition: 'object-cover object-[70%_20%]',
+    imageContainerClass: 'w-full sm:w-1/2 lg:w-1/2',
+    bg: '#D8D4CF',
+    ambientGlow: 'radial-gradient(circle at 75% 50%, rgba(255, 235, 204, 0.4) 0%, rgba(212, 175, 55, 0.12) 35%, transparent 70%)',
+    floatingBadge: {
+      title: 'Breathable Maternity Wear',
+      subtitle: 'Ultra Comfortable silhouttes',
+      rating: '4.9 ★★★★★',
+    },
+    features: ['Breathable Fabric', 'Flexible Bump Expansion', 'Seamless Comfort'],
   },
   {
     id: 3,
@@ -50,11 +66,19 @@ const slides = [
     primaryHref: '/category/casuals/feeding',
     secondaryCta: 'NON-FEEDING WEAR',
     secondaryHref: '/category/casuals/non-feeding',
-    image: '/images/hero/slide3.png',
+    image: '/images/herohalf/image copy.png',
     alt: 'Feeding and non feeding dress online - YEZ BEE',
     align: 'right',
-    imagePosition: 'object-cover object-[25%_15%]',
+    imagePosition: 'object-cover object-[30%_20%]',
+    imageContainerClass: 'w-full sm:w-1/2 lg:w-1/2',
     bg: '#CBB8A9',
+    ambientGlow: 'radial-gradient(circle at 25% 50%, rgba(255, 235, 204, 0.4) 0%, rgba(212, 175, 55, 0.12) 35%, transparent 70%)',
+    floatingBadge: {
+      title: 'Feeding & Non-Feeding',
+      subtitle: 'Versatile Daily Couture',
+      rating: '4.8 ★★★★★',
+    },
+    features: ['Discrete Zippers', 'All-Day Wear', 'Stylish Silhouettes'],
   },
   {
     id: 4,
@@ -66,11 +90,19 @@ const slides = [
     primaryHref: '/category/all',
     secondaryCta: 'EXPLORE OFFER DEALS',
     secondaryHref: '/sale',
-    image: '/images/hero/slide4.png',
+    image: '/images/herohalf/image copy 2.png',
     alt: 'Flat 10% OFF offer on YEZ BEE maternity and feeding dresses',
     align: 'right',
-    imagePosition: 'object-cover object-[25%_15%]',
+    imagePosition: 'object-cover object-[30%_20%]',
+    imageContainerClass: 'w-full sm:w-1/2 lg:w-1/2',
     bg: '#DFD7CE',
+    ambientGlow: 'radial-gradient(circle at 25% 50%, rgba(255, 235, 204, 0.4) 0%, rgba(212, 175, 55, 0.12) 35%, transparent 70%)',
+    floatingBadge: {
+      title: 'Exclusive Offer',
+      subtitle: 'Flat 10% OFF Sitewide',
+      rating: '5.0 ★★★★★',
+    },
+    features: ['Flat 10% OFF', 'Free Shipping', 'Easy Returns'],
   },
 ];
 
@@ -109,7 +141,7 @@ export default function Hero() {
 
   return (
     <section
-      className="relative w-full h-[580px] sm:h-[680px] md:h-[760px] lg:h-[840px] overflow-hidden text-white transition-colors duration-700"
+      className="relative w-full h-[480px] sm:h-[560px] md:h-[650px] lg:h-[720px] overflow-hidden text-white transition-colors duration-700"
       style={{ backgroundColor: slide.bg }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -123,33 +155,79 @@ export default function Hero() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           className="absolute inset-0 z-0"
-          style={{ backgroundColor: slide.bg }}
         >
-          {/* Single clean slide image */}
-          <Image
-            src={slide.image}
-            alt={slide.alt}
-            fill
-            priority
-            loading="eager"
-            sizes="100vw"
-            className={cn('transition-transform duration-1000', slide.imagePosition)}
-          />
+          {/* Ambient radial glow for luxury depth */}
+          {slide.ambientGlow && (
+            <div
+              className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-700"
+              style={{ background: slide.ambientGlow }}
+            />
+          )}
+
+          {/* Hero Slide Image container with seamless edge blending */}
+          <div
+            className={cn(
+              'absolute inset-y-0 z-0 h-full',
+              slide.imageContainerClass || 'w-full sm:w-1/2 lg:w-[58%]',
+              slide.align === 'left' ? 'right-0' : 'left-0'
+            )}
+            style={{
+              maskImage: slide.align === 'left'
+                ? 'linear-gradient(to right, transparent 0%, black 25%, black 100%)'
+                : 'linear-gradient(to left, transparent 0%, black 25%, black 100%)',
+              WebkitMaskImage: slide.align === 'left'
+                ? 'linear-gradient(to right, transparent 0%, black 25%, black 100%)'
+                : 'linear-gradient(to left, transparent 0%, black 25%, black 100%)',
+            }}
+          >
+            <Image
+              src={slide.image}
+              alt={slide.alt}
+              fill
+              priority={slide.id === 1}
+              className={cn(
+                slide.imagePosition || 'object-cover',
+                !slide.imagePosition && (slide.align === 'left' ? 'object-right-top' : 'object-left-top')
+              )}
+              sizes="(max-width: 640px) 100vw, 50vw"
+            />
+
+            {/* Floating Glassmorphic Badge */}
+            {slide.floatingBadge && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.88, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.5 }}
+                className="absolute bottom-6 left-6 md:left-8 z-20 hidden md:flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-2xl text-white pointer-events-auto"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--color-primary-gold)] to-[var(--color-gold-light)] flex items-center justify-center text-[var(--color-dark)] shrink-0 shadow-md font-bold text-xs">
+                  ✨
+                </div>
+                <div>
+                  <p className="text-xs font-bold tracking-wide text-white drop-shadow-sm">{slide.floatingBadge.title}</p>
+                  <p className="text-[11px] text-white/80 font-medium">{slide.floatingBadge.subtitle}</p>
+                </div>
+                <div className="ml-1 px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-bold text-[var(--color-gold-light)] border border-white/20">
+                  {slide.floatingBadge.rating}
+                </div>
+              </motion.div>
+            )}
+          </div>
 
           <div
             className={cn(
               'absolute inset-0 z-10 pointer-events-none',
               slide.align === 'left'
-                ? 'bg-gradient-to-r from-black/85 via-black/40 via-50% to-transparent'
-                : 'bg-gradient-to-l from-black/85 via-black/40 via-50% to-transparent'
+                ? 'bg-gradient-to-r from-black/80 via-black/35 via-45% to-transparent'
+                : 'bg-gradient-to-l from-black/80 via-black/35 via-45% to-transparent'
             )}
           />
-          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/85 via-black/30 to-transparent sm:hidden pointer-events-none" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/25 to-transparent sm:hidden pointer-events-none" />
         </motion.div>
       </AnimatePresence>
 
       <div className="relative z-20 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="h-full flex items-center py-6 sm:py-8 md:py-10">
+        <div className="h-full flex items-center py-6 sm:py-8">
           <div
             className={cn(
               'w-full max-w-md sm:max-w-lg lg:max-w-xl z-20',
@@ -166,9 +244,9 @@ export default function Hero() {
                 exit="hidden"
                 className="flex flex-col items-start"
               >
-                <motion.div custom={0} variants={textVariants} className="inline-flex items-center gap-2.5 mb-2.5 sm:mb-3">
-                  <Sparkles size={16} className="text-[var(--color-primary-gold)]" />
-                  <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.26em] text-[var(--color-gold-light)]">
+                <motion.div custom={0} variants={textVariants} className="inline-flex items-center gap-2 mb-1.5 sm:mb-2">
+                  <span className="px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/25 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-gold-light)] shadow-xs">
+                    <Sparkles size={13} className="text-[var(--color-primary-gold)] animate-pulse" />
                     {slide.eyebrow}
                   </span>
                 </motion.div>
@@ -176,7 +254,7 @@ export default function Hero() {
                 <motion.h1
                   custom={1}
                   variants={textVariants}
-                  className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.14] mb-3 sm:mb-4 drop-shadow-md"
+                  className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.15] mb-2 sm:mb-3 drop-shadow-md"
                 >
                   {slide.heading}
                 </motion.h1>
@@ -184,24 +262,39 @@ export default function Hero() {
                 <motion.p
                   custom={2}
                   variants={textVariants}
-                  className="text-sm sm:text-base lg:text-lg text-white/90 font-sans leading-relaxed mb-6 sm:mb-8 max-w-xl drop-shadow-sm"
+                  className="text-xs sm:text-sm lg:text-base text-white/90 font-sans leading-relaxed mb-3 sm:mb-4 max-w-xl drop-shadow-sm"
                 >
                   <span className="hidden sm:inline">{slide.description}</span>
                   <span className="sm:hidden">{slide.mobileDescription}</span>
                 </motion.p>
 
-                <motion.div custom={3} variants={textVariants} className="flex flex-wrap items-center gap-3 sm:gap-4">
+                {/* Feature Tags for Slide 1 */}
+                {slide.features && (
+                  <motion.div custom={2.5} variants={textVariants} className="flex flex-wrap gap-2 mb-4">
+                    {slide.features.map((feat, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-semibold text-white/95 shadow-2xs"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary-gold)]" />
+                        {feat}
+                      </span>
+                    ))}
+                  </motion.div>
+                )}
+
+                <motion.div custom={3} variants={textVariants} className="flex flex-wrap items-center gap-2.5 sm:gap-3.5">
                   <Link
                     href={slide.primaryHref}
                     className={cn(
-                      'group inline-flex items-center gap-2.5 rounded-full px-7 sm:px-9 py-3.5 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 min-h-[46px] sm:min-h-[50px]',
+                      'group inline-flex items-center gap-2 rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-300 min-h-[38px] sm:min-h-[44px]',
                       'bg-gradient-to-r from-[var(--color-primary-gold)] to-[var(--color-gold-light)] text-[var(--color-dark)]',
-                      'hover:shadow-gold-md hover:scale-105 active:scale-95'
+                      'hover:shadow-[0_8px_25px_rgba(212,175,55,0.45)] hover:scale-105 active:scale-95'
                     )}
                   >
                     {slide.primaryCta}
                     <ArrowRight
-                      size={16}
+                      size={14}
                       className="transition-transform duration-300 group-hover:translate-x-1"
                     />
                   </Link>
@@ -210,9 +303,8 @@ export default function Hero() {
                     <Link
                       href={slide.secondaryHref!}
                       className={cn(
-                        'inline-flex items-center gap-2 rounded-full px-6 sm:px-8 py-3.5 sm:py-4 text-xs sm:text-sm font-bold uppercase tracking-[0.16em] transition-all duration-300 min-h-[46px] sm:min-h-[50px]',
-                        'border border-white/50 text-white backdrop-blur-sm',
-                        'hover:bg-white hover:text-[var(--color-dark)] hover:border-white'
+                        'inline-flex items-center gap-2 rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-xs font-bold uppercase tracking-[0.14em] transition-all duration-300 min-h-[38px] sm:min-h-[44px]',
+                        'border border-white/50 text-white backdrop-blur-sm bg-white/10 hover:bg-white hover:text-[var(--color-dark)] hover:border-white'
                       )}
                     >
                       {slide.secondaryCta}
@@ -220,8 +312,8 @@ export default function Hero() {
                   )}
                 </motion.div>
 
-                <motion.div custom={4} variants={textVariants} className="mt-6 sm:mt-8 pt-4 border-t border-white/20 flex items-center gap-2 text-xs sm:text-sm text-white/80 font-medium">
-                  <HeartHandshake size={16} className="text-[var(--color-primary-gold)] shrink-0" />
+                <motion.div custom={4} variants={textVariants} className="mt-4 sm:mt-5 pt-3 border-t border-white/20 flex items-center gap-2 text-xs text-white/80 font-medium">
+                  <HeartHandshake size={14} className="text-[var(--color-primary-gold)] shrink-0" />
                   <span>Comfort-first silhouettes • Easy movement • Thoughtful fits</span>
                 </motion.div>
               </motion.div>

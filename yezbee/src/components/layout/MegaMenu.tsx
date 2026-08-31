@@ -30,7 +30,7 @@ const CATEGORY_COLUMNS = [
       { label: 'PEPLUM TOPS → FEEDING', href: '/category/peplum-tops/feeding' },
       { label: 'PEPLUM TOPS → NON-FEEDING', href: '/category/peplum-tops/non-feeding' },
       { label: 'LOUNGE WEAR', href: '/category/lounge-wear' },
-      { label: 'KIDS WEAR', href: '/category/kids-wear' },
+      { label: 'KIDS SETS', href: '/category/kids-wear' },
     ],
   },
 ];
