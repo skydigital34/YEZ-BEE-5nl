@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { Ruler, Sparkles, HeartHandshake } from 'lucide-react';
 
 export const metadata = {
@@ -85,6 +85,34 @@ export default function SizeGuidePage() {
                     <td className="p-3 border border-gray-100">46</td>
                     <td className="p-3 border border-gray-100">44</td>
                     <td className="p-3 border border-gray-100">50</td>
+                    <td className="p-3 border border-gray-100">44 - 46</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-bold border border-gray-100">4XL</td>
+                    <td className="p-3 border border-gray-100">48</td>
+                    <td className="p-3 border border-gray-100">46</td>
+                    <td className="p-3 border border-gray-100">52</td>
+                    <td className="p-3 border border-gray-100">44 - 46</td>
+                  </tr>
+                  <tr className="bg-gray-50/50">
+                    <td className="p-3 font-bold border border-gray-100">5XL</td>
+                    <td className="p-3 border border-gray-100">50</td>
+                    <td className="p-3 border border-gray-100">48</td>
+                    <td className="p-3 border border-gray-100">54</td>
+                    <td className="p-3 border border-gray-100">44 - 46</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-bold border border-gray-100">6XL</td>
+                    <td className="p-3 border border-gray-100">52</td>
+                    <td className="p-3 border border-gray-100">50</td>
+                    <td className="p-3 border border-gray-100">56</td>
+                    <td className="p-3 border border-gray-100">44 - 46</td>
+                  </tr>
+                  <tr className="bg-gray-50/50">
+                    <td className="p-3 font-bold border border-gray-100">7XL</td>
+                    <td className="p-3 border border-gray-100">54</td>
+                    <td className="p-3 border border-gray-100">52</td>
+                    <td className="p-3 border border-gray-100">58</td>
                     <td className="p-3 border border-gray-100">44 - 46</td>
                   </tr>
                 </tbody>

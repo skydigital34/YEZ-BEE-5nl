@@ -15,7 +15,7 @@ const ADMIN_COLLECTION = 'admin_users';
 
 export const DEFAULT_ADMIN_CREDENTIALS = {
   email: 'sbfashionamazon@gmail.com',
-  password: 'YzB#9842$Mst@Admin!2026',
+  password: 'Sbmadu@1313',
   name: 'SB Fashion Admin',
   role: 'superadmin',
 };

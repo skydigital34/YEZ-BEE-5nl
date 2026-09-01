@@ -121,7 +121,7 @@ export default function AdminLoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors(prev => ({ ...prev, email: undefined })) }}
-                    placeholder="sbfashionamazon@gmail.com"
+                    placeholder="admin@yezbeefashion.com"
                     className={`w-full pl-10 pr-4 py-2.5 bg-[#FAF7F2] rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
                       errors.email ? 'ring-2 ring-red-300 bg-red-50' : 'focus:ring-[#C9A84C]/30 focus:bg-white'
                     }`}

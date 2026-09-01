@@ -55,7 +55,7 @@ const PRESET_COLORS = [
   { name: 'Midnight Black', hex: '#1A1A1A' },
 ];
 
-const ADULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
+const ADULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'Free Size'];
 const KIDS_SIZES = ['2-3Y', '4-5Y', '6-7Y', '8-9Y', '10-11Y', '12-13Y'];
 
 export interface FormVariant {
@@ -126,10 +126,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
   const [selectedColors, setSelectedColors] = useState<{ name: string; hex: string }[]>([
     PRESET_COLORS[0],
-    PRESET_COLORS[1],
   ]);
   const [customColorName, setCustomColorName] = useState('');
   const [customColorHex, setCustomColorHex] = useState('#C9A84C');
+  const [customSizeInput, setCustomSizeInput] = useState('');
+  const [bulkPriceInput, setBulkPriceInput] = useState<string>('');
+  const [bulkStockInput, setBulkStockInput] = useState<string>('');
 
   const [selectedSizes, setSelectedSizes] = useState<string[]>(['S', 'M', 'L', 'XL']);
 
@@ -155,6 +157,30 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       price: 999,
       compareAtPrice: 1499,
       stock: 15,
+      lowStockThreshold: 5,
+      isActive: true,
+    },
+    {
+      id: 'v3',
+      sku: 'YZB-CAS-PCH-L',
+      color: 'Peach Floral',
+      colorHex: '#FFDAB9',
+      size: 'L',
+      price: 999,
+      compareAtPrice: 1499,
+      stock: 10,
+      lowStockThreshold: 5,
+      isActive: true,
+    },
+    {
+      id: 'v4',
+      sku: 'YZB-CAS-PCH-XL',
+      color: 'Peach Floral',
+      colorHex: '#FFDAB9',
+      size: 'XL',
+      price: 999,
+      compareAtPrice: 1499,
+      stock: 10,
       lowStockThreshold: 5,
       isActive: true,
     },
@@ -295,6 +321,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       setImages([]);
     }
 
+    const colorMap = new Map<string, string>();
+    if (Array.isArray(p.colors) && p.colors.length > 0) {
+      p.colors.forEach((c: any) => {
+        const name = typeof c === 'string' ? c : c?.name;
+        const hex = typeof c === 'object' && c?.hex ? c.hex : '#000000';
+        if (name) colorMap.set(name, hex);
+      });
+    }
+
+    const sizeSet = new Set<string>();
+    if (Array.isArray(p.sizes) && p.sizes.length > 0) {
+      p.sizes.forEach((s: any) => {
+        if (typeof s === 'string' && s.trim()) sizeSet.add(s.trim());
+      });
+    }
+
     if (p.variants && Array.isArray(p.variants) && p.variants.length > 0) {
       const mappedVariants: FormVariant[] = p.variants.map((v: any, idx: number) => ({
         id: v._id || v.id || `v-${idx}-${Date.now()}`,
@@ -303,26 +345,55 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         colorHex: v.colorHex || '#000000',
         size: v.size || 'M',
         price: Number(v.price) || Number(p.price) || 0,
-        compareAtPrice: v.compareAtPrice,
+        compareAtPrice: v.compareAtPrice !== undefined ? Number(v.compareAtPrice) : undefined,
         stock: Number(v.stock) || 0,
         lowStockThreshold: v.lowStockThreshold || 5,
         isActive: v.isActive !== false,
       }));
-      setVariants(mappedVariants);
 
-      const colorMap = new Map<string, string>();
       mappedVariants.forEach((v) => {
         if (v.color && !colorMap.has(v.color)) {
           colorMap.set(v.color, v.colorHex || '#000000');
         }
-      });
-      setSelectedColors(Array.from(colorMap.entries()).map(([name, hex]) => ({ name, hex })));
-
-      const sizeSet = new Set<string>();
-      mappedVariants.forEach((v) => {
         if (v.size) sizeSet.add(v.size);
       });
-      setSelectedSizes(Array.from(sizeSet));
+
+      const extractedColors = Array.from(colorMap.entries()).map(([name, hex]) => ({ name, hex }));
+      const finalColors = extractedColors.length > 0 ? extractedColors : [PRESET_COLORS[0]];
+      const finalSizes = Array.from(sizeSet).length > 0 ? Array.from(sizeSet) : ['S', 'M', 'L', 'XL'];
+
+      setVariants(mappedVariants);
+      setSelectedColors(finalColors);
+      setSelectedSizes(finalSizes);
+    } else {
+      const defaultColors = colorMap.size > 0
+        ? Array.from(colorMap.entries()).map(([name, hex]) => ({ name, hex }))
+        : [PRESET_COLORS[0]];
+      const defaultSizes = sizeSet.size > 0 ? Array.from(sizeSet) : ['S', 'M', 'L', 'XL'];
+
+      setSelectedColors(defaultColors);
+      setSelectedSizes(defaultSizes);
+
+      const baseCode = (p.slug || slugify(p.name || '') || 'PROD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'PROD';
+      const newVars: FormVariant[] = [];
+      defaultColors.forEach((col) => {
+        const colorShort = col.name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'COL';
+        defaultSizes.forEach((sz) => {
+          newVars.push({
+            id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+            sku: `YZB-${baseCode}-${colorShort}-${sz}`,
+            color: col.name,
+            colorHex: col.hex,
+            size: sz,
+            price: Number(p.price) || 0,
+            compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : undefined,
+            stock: Number(p.stock) || 10,
+            lowStockThreshold: 5,
+            isActive: true,
+          });
+        });
+      });
+      setVariants(newVars);
     }
 
     if (p.seo) {
@@ -439,22 +510,238 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     }
   };
 
+  const generateSKU = (productSlug: string, colorName: string, sizeName: string) => {
+    const baseCode = (productSlug || slug || slugify(name || 'PROD') || 'PROD')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 6) || 'PROD';
+    const colorShort = colorName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 3).toUpperCase() || 'COL';
+    const sizeShort = sizeName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'SZ';
+    return `YZB-${baseCode}-${colorShort}-${sizeShort}`;
+  };
+
+  const handleToggleColor = (col: { name: string; hex: string }) => {
+    const isSelected = selectedColors.some((c) => c.name === col.name);
+    if (isSelected) {
+      const newColors = selectedColors.filter((c) => c.name !== col.name);
+      setSelectedColors(newColors);
+      setVariants((prev) => prev.filter((v) => v.color !== col.name));
+    } else {
+      const newColors = [...selectedColors, col];
+      setSelectedColors(newColors);
+      const newItems: FormVariant[] = [];
+      selectedSizes.forEach((sz) => {
+        newItems.push({
+          id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+          sku: generateSKU(slug || name, col.name, sz),
+          color: col.name,
+          colorHex: col.hex,
+          size: sz,
+          price: typeof price === 'number' && price > 0 ? price : 0,
+          compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+          stock: 10,
+          lowStockThreshold: 5,
+          isActive: true,
+        });
+      });
+      setVariants((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const handleAddCustomColor = () => {
+    if (!customColorName.trim()) return;
+    const newCol = { name: customColorName.trim(), hex: customColorHex };
+    if (!selectedColors.some((c) => c.name.toLowerCase() === newCol.name.toLowerCase())) {
+      const newColors = [...selectedColors, newCol];
+      setSelectedColors(newColors);
+      const newItems: FormVariant[] = [];
+      selectedSizes.forEach((sz) => {
+        newItems.push({
+          id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+          sku: generateSKU(slug || name, newCol.name, sz),
+          color: newCol.name,
+          colorHex: newCol.hex,
+          size: sz,
+          price: typeof price === 'number' && price > 0 ? price : 0,
+          compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+          stock: 10,
+          lowStockThreshold: 5,
+          isActive: true,
+        });
+      });
+      setVariants((prev) => [...prev, ...newItems]);
+    }
+    setCustomColorName('');
+  };
+
+  const handleToggleSize = (sz: string) => {
+    const isSelected = selectedSizes.includes(sz);
+    if (isSelected) {
+      const newSizes = selectedSizes.filter((s) => s !== sz);
+      setSelectedSizes(newSizes);
+      setVariants((prev) => prev.filter((v) => v.size !== sz));
+    } else {
+      const newSizes = [...selectedSizes, sz];
+      setSelectedSizes(newSizes);
+      const newItems: FormVariant[] = [];
+      selectedColors.forEach((colorObj) => {
+        newItems.push({
+          id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+          sku: generateSKU(slug || name, colorObj.name, sz),
+          color: colorObj.name,
+          colorHex: colorObj.hex,
+          size: sz,
+          price: typeof price === 'number' && price > 0 ? price : 0,
+          compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+          stock: 10,
+          lowStockThreshold: 5,
+          isActive: true,
+        });
+      });
+      setVariants((prev) => [...prev, ...newItems]);
+    }
+  };
+
+  const handleAddCustomSize = () => {
+    const trimmed = customSizeInput.trim().toUpperCase();
+    if (!trimmed) return;
+    if (!selectedSizes.includes(trimmed)) {
+      const newSizes = [...selectedSizes, trimmed];
+      setSelectedSizes(newSizes);
+      const newItems: FormVariant[] = [];
+      selectedColors.forEach((colorObj) => {
+        newItems.push({
+          id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+          sku: generateSKU(slug || name, colorObj.name, trimmed),
+          color: colorObj.name,
+          colorHex: colorObj.hex,
+          size: trimmed,
+          price: typeof price === 'number' && price > 0 ? price : 0,
+          compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+          stock: 10,
+          lowStockThreshold: 5,
+          isActive: true,
+        });
+      });
+      setVariants((prev) => [...prev, ...newItems]);
+    }
+    setCustomSizeInput('');
+  };
+
+  const handleDeleteVariant = (variantId: string) => {
+    setVariants((prev) => {
+      const remaining = prev.filter((v) => v.id !== variantId);
+      const remainingSizes = new Set(remaining.map((v) => v.size));
+      const remainingColors = new Set(remaining.map((v) => v.color));
+      setSelectedSizes((prevSizes) => prevSizes.filter((s) => remainingSizes.has(s)));
+      setSelectedColors((prevColors) => prevColors.filter((c) => remainingColors.has(c.name)));
+      return remaining;
+    });
+  };
+
+  const handleSelectAllSizes = () => {
+    const targetSizes = selectedCategory === 'kids-wear' ? KIDS_SIZES : ADULT_SIZES;
+    setSelectedSizes(targetSizes);
+    const existingKeySet = new Set(variants.map((v) => `${v.color.toLowerCase()}__${v.size.toUpperCase()}`));
+    const newItems: FormVariant[] = [];
+
+    selectedColors.forEach((col) => {
+      targetSizes.forEach((sz) => {
+        const key = `${col.name.toLowerCase()}__${sz.toUpperCase()}`;
+        if (!existingKeySet.has(key)) {
+          newItems.push({
+            id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+            sku: generateSKU(slug || name, col.name, sz),
+            color: col.name,
+            colorHex: col.hex,
+            size: sz,
+            price: typeof price === 'number' && price > 0 ? price : 0,
+            compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+            stock: 10,
+            lowStockThreshold: 5,
+            isActive: true,
+          });
+        }
+      });
+    });
+    setVariants((prev) => [...prev, ...newItems]);
+    showToast(`Selected all ${targetSizes.length} sizes.`);
+  };
+
+  const handleClearAllSizes = () => {
+    setSelectedSizes([]);
+    setVariants([]);
+    showToast('Cleared all active sizes.');
+  };
+
+  const handleSelectAllColors = () => {
+    setSelectedColors(PRESET_COLORS);
+    const existingKeySet = new Set(variants.map((v) => `${v.color.toLowerCase()}__${v.size.toUpperCase()}`));
+    const newItems: FormVariant[] = [];
+
+    PRESET_COLORS.forEach((col) => {
+      selectedSizes.forEach((sz) => {
+        const key = `${col.name.toLowerCase()}__${sz.toUpperCase()}`;
+        if (!existingKeySet.has(key)) {
+          newItems.push({
+            id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
+            sku: generateSKU(slug || name, col.name, sz),
+            color: col.name,
+            colorHex: col.hex,
+            size: sz,
+            price: typeof price === 'number' && price > 0 ? price : 0,
+            compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+            stock: 10,
+            lowStockThreshold: 5,
+            isActive: true,
+          });
+        }
+      });
+    });
+    setVariants((prev) => [...prev, ...newItems]);
+    showToast('Selected all preset colors.');
+  };
+
+  const handleClearAllColors = () => {
+    setSelectedColors([]);
+    setVariants([]);
+    showToast('Cleared all active colors.');
+  };
+
+  const handleApplyBulkPrice = () => {
+    const num = Number(bulkPriceInput);
+    if (!num || num <= 0) {
+      alert('Please enter a valid price to apply to all variants.');
+      return;
+    }
+    setVariants((prev) => prev.map((v) => ({ ...v, price: num })));
+    setBulkPriceInput('');
+    showToast(`Updated price to ₹${num} for all variants.`);
+  };
+
+  const handleApplyBulkStock = () => {
+    const num = Number(bulkStockInput);
+    if (isNaN(num) || num < 0) {
+      alert('Please enter a valid stock quantity to apply to all variants.');
+      return;
+    }
+    setVariants((prev) => prev.map((v) => ({ ...v, stock: num })));
+    setBulkStockInput('');
+    showToast(`Updated stock to ${num} for all variants.`);
+  };
+
   const handleGenerateVariantMatrix = () => {
     if (selectedColors.length === 0 || selectedSizes.length === 0) {
       alert('Please select at least one color and one size to generate variants.');
       return;
     }
 
-    const baseCode = (slug || 'PROD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
     const newVariants: FormVariant[] = [];
-
     selectedColors.forEach((colorObj) => {
-      const colorShort = colorObj.name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'COL';
       selectedSizes.forEach((sz) => {
-        const sku = `YZB-${baseCode}-${colorShort}-${sz}`;
         newVariants.push({
           id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
-          sku,
+          sku: generateSKU(slug || name, colorObj.name, sz),
           color: colorObj.name,
           colorHex: colorObj.hex,
           size: sz,
@@ -469,15 +756,6 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
     setVariants(newVariants);
     showToast(`Generated ${newVariants.length} variants based on active colors and sizes.`);
-  };
-
-  const handleAddCustomColor = () => {
-    if (!customColorName.trim()) return;
-    const newCol = { name: customColorName.trim(), hex: customColorHex };
-    if (!selectedColors.some((c) => c.name.toLowerCase() === newCol.name.toLowerCase())) {
-      setSelectedColors((prev) => [...prev, newCol]);
-    }
-    setCustomColorName('');
   };
 
   const compressImageFile = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.82): Promise<string> => {
@@ -663,18 +941,17 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     // Ensure variants strictly match active selected colors and sizes
     const activeColorNames = selectedColors.map((c) => c.name);
     let finalVariants: FormVariant[] = variants.filter(
-      (v) => activeColorNames.includes(v.color) && selectedSizes.includes(v.size)
+      (v) => (activeColorNames.length === 0 || activeColorNames.includes(v.color)) &&
+             (selectedSizes.length === 0 || selectedSizes.includes(v.size))
     );
 
-    // If variants were not regenerated after selecting new colors/sizes, generate them automatically
+    // If variants were not populated yet, generate them automatically
     if (finalVariants.length === 0 && selectedColors.length > 0 && selectedSizes.length > 0) {
-      const baseCode = (slug || 'PROD').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
       selectedColors.forEach((colorObj) => {
-        const colorShort = colorObj.name.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'COL';
         selectedSizes.forEach((sz) => {
           finalVariants.push({
             id: `v-${Date.now()}-${Math.random().toString(36).slice(-4)}`,
-            sku: `YZB-${baseCode}-${colorShort}-${sz}`,
+            sku: generateSKU(slug || name, colorObj.name, sz),
             color: colorObj.name,
             colorHex: colorObj.hex,
             size: sz,
@@ -1123,7 +1400,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   4. Colors, Sizes & Variant Matrix
                 </h2>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Configure swatches and matrix inventory ({variants.length} active variants)
+                  Configure swatches, sizes up to 7XL, individual prices & stock ({variants.length} active variants · Total Stock: {totalStock})
                 </p>
               </div>
 
@@ -1136,8 +1413,28 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
               </button>
             </div>
 
+            {/* Color Selection */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-2">Select Active Colors</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-gray-700">Select Active Colors ({selectedColors.length} selected)</label>
+                <div className="flex items-center gap-2 text-[11px] font-bold">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllColors}
+                    className="text-[var(--color-primary-gold)] hover:underline"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={handleClearAllColors}
+                    className="text-gray-500 hover:text-rose-600 hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {PRESET_COLORS.map((col) => {
                   const isSelected = selectedColors.some((c) => c.name === col.name);
@@ -1145,13 +1442,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     <button
                       key={col.name}
                       type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedColors((prev) => prev.filter((c) => c.name !== col.name));
-                        } else {
-                          setSelectedColors((prev) => [...prev, col]);
-                        }
-                      }}
+                      onClick={() => handleToggleColor(col)}
                       className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all ${
                         isSelected
                           ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
@@ -1171,6 +1462,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   placeholder="Add custom color name"
                   value={customColorName}
                   onChange={(e) => setCustomColorName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomColor();
+                    }
+                  }}
                   className="flex-1 px-3 py-1.5 text-xs border rounded-xl outline-none"
                 />
                 <input
@@ -1182,17 +1479,37 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                 <button
                   type="button"
                   onClick={handleAddCustomColor}
-                  className="px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-xl hover:bg-black"
+                  className="px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors"
                 >
-                  + Add
+                  + Add Color
                 </button>
               </div>
             </div>
 
+            {/* Size Selection */}
             <div>
-              <label className="text-xs font-bold text-gray-700 block mb-2">
-                Select Active Sizes ({selectedCategory === 'kids-wear' ? 'Kids' : 'Adult'})
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-gray-700">
+                  Select Active Sizes ({selectedCategory === 'kids-wear' ? 'Kids' : 'Adult'}) ({selectedSizes.length} selected)
+                </label>
+                <div className="flex items-center gap-2 text-[11px] font-bold">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllSizes}
+                    className="text-[var(--color-primary-gold)] hover:underline"
+                  >
+                    Select All {selectedCategory === 'kids-wear' ? 'Kids' : 'Adult'} Sizes
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={handleClearAllSizes}
+                    className="text-gray-500 hover:text-rose-600 hover:underline"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {(selectedCategory === 'kids-wear' ? KIDS_SIZES : ADULT_SIZES).map((sz) => {
                   const isSelected = selectedSizes.includes(sz);
@@ -1200,14 +1517,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     <button
                       key={sz}
                       type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setSelectedSizes((prev) => prev.filter((s) => s !== sz));
-                        } else {
-                          setSelectedSizes((prev) => [...prev, sz]);
-                        }
-                      }}
-                      className={`min-w-[42px] h-9 px-3 rounded-xl border text-xs font-bold transition-all ${
+                      onClick={() => handleToggleSize(sz)}
+                      className={`min-w-[44px] h-9 px-3 rounded-xl border text-xs font-bold transition-all ${
                         isSelected
                           ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
                           : 'bg-white text-gray-700 border-gray-200 hover:border-black'
@@ -1218,30 +1529,106 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   );
                 })}
               </div>
+
+              <div className="pt-3 flex items-center gap-3 max-w-sm">
+                <input
+                  type="text"
+                  placeholder="Custom size (e.g. 8XL)"
+                  value={customSizeInput}
+                  onChange={(e) => setCustomSizeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomSize();
+                    }
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs border rounded-xl outline-none uppercase font-bold"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomSize}
+                  className="px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors"
+                >
+                  + Add Size
+                </button>
+              </div>
             </div>
 
+            {/* Bulk Price & Stock Quick Setters */}
             {variants.length > 0 && (
-              <div className="border border-gray-200 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto max-h-80">
-                  <table className="w-full text-left text-xs">
-                    <thead className="sticky top-0 bg-gray-100 z-10 font-bold text-gray-700 uppercase tracking-wider text-[10px]">
+              <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="font-bold text-gray-700 flex items-center gap-1.5">
+                  <Sliders size={14} className="text-[var(--color-primary-gold)]" /> Quick Bulk Adjustments:
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-600 font-medium">Price:</span>
+                    <input
+                      type="number"
+                      placeholder="₹"
+                      value={bulkPriceInput}
+                      onChange={(e) => setBulkPriceInput(e.target.value)}
+                      className="w-20 px-2 py-1 text-xs border rounded-lg bg-white outline-none font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyBulkPrice}
+                      className="px-2.5 py-1 bg-gray-800 text-white text-[11px] font-bold rounded-lg hover:bg-black transition-colors"
+                    >
+                      Apply All
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-gray-600 font-medium">Stock:</span>
+                    <input
+                      type="number"
+                      placeholder="Qty"
+                      value={bulkStockInput}
+                      onChange={(e) => setBulkStockInput(e.target.value)}
+                      className="w-16 px-2 py-1 text-xs border rounded-lg bg-white outline-none font-bold"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyBulkStock}
+                      className="px-2.5 py-1 bg-gray-800 text-white text-[11px] font-bold rounded-lg hover:bg-black transition-colors"
+                    >
+                      Apply All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Variant Matrix Table */}
+            {variants.length > 0 ? (
+              <div className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm bg-white">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-gray-100 font-bold text-gray-700 uppercase tracking-wider text-[10px] border-b border-gray-200">
                       <tr>
-                        <th className="p-3">Color</th>
-                        <th className="p-3">Size</th>
-                        <th className="p-3">SKU</th>
-                        <th className="p-3">Price (₹)</th>
-                        <th className="p-3">Stock</th>
-                        <th className="p-3">Status</th>
+                        <th className="p-3.5">Color</th>
+                        <th className="p-3.5">Size</th>
+                        <th className="p-3.5">SKU</th>
+                        <th className="p-3.5">Price (₹)</th>
+                        <th className="p-3.5">Compare (₹)</th>
+                        <th className="p-3.5">Stock</th>
+                        <th className="p-3.5">Status</th>
+                        <th className="p-3.5 text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 font-sans">
                       {variants.map((v, idx) => (
-                        <tr key={v.id || idx} className="hover:bg-gray-50">
+                        <tr key={v.id || idx} className="hover:bg-amber-50/40 transition-colors">
                           <td className="p-3 font-bold flex items-center gap-2">
-                            <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0" style={{ backgroundColor: v.colorHex }} />
+                            <span className="w-3.5 h-3.5 rounded-full border border-gray-300 shrink-0 shadow-xs" style={{ backgroundColor: v.colorHex }} />
                             {v.color}
                           </td>
-                          <td className="p-3 font-bold text-[var(--color-primary-gold)]">{v.size}</td>
+                          <td className="p-3 font-bold text-[var(--color-primary-gold)]">
+                            <span className="inline-block px-2.5 py-1 rounded-lg bg-[var(--color-dark)] text-white text-[11px] font-bold shadow-xs">
+                              {v.size}
+                            </span>
+                          </td>
                           <td className="p-3">
                             <input
                               type="text"
@@ -1251,7 +1638,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                                 updated[idx].sku = e.target.value;
                                 setVariants(updated);
                               }}
-                              className="px-2 py-1 text-xs border rounded font-mono w-36"
+                              className="px-2.5 py-1.5 text-xs border rounded-lg font-mono w-36 bg-white outline-none focus:border-[var(--color-primary-gold)] focus:ring-1 focus:ring-[var(--color-primary-gold)]"
                             />
                           </td>
                           <td className="p-3">
@@ -1263,7 +1650,20 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                                 updated[idx].price = Number(e.target.value) || 0;
                                 setVariants(updated);
                               }}
-                              className="px-2 py-1 text-xs border rounded font-bold w-20"
+                              className="px-2.5 py-1.5 text-xs border rounded-lg font-bold w-20 bg-white outline-none focus:border-[var(--color-primary-gold)] focus:ring-1 focus:ring-[var(--color-primary-gold)]"
+                            />
+                          </td>
+                          <td className="p-3">
+                            <input
+                              type="number"
+                              value={v.compareAtPrice ?? ''}
+                              placeholder="Optional"
+                              onChange={(e) => {
+                                const updated = [...variants];
+                                updated[idx].compareAtPrice = e.target.value ? Number(e.target.value) : undefined;
+                                setVariants(updated);
+                              }}
+                              className="px-2.5 py-1.5 text-xs border rounded-lg text-gray-500 w-20 bg-white outline-none focus:border-[var(--color-primary-gold)] focus:ring-1 focus:ring-[var(--color-primary-gold)]"
                             />
                           </td>
                           <td className="p-3">
@@ -1275,12 +1675,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                                 updated[idx].stock = Number(e.target.value) || 0;
                                 setVariants(updated);
                               }}
-                              className="px-2 py-1 text-xs border rounded font-bold w-16"
+                              className="px-2.5 py-1.5 text-xs border rounded-lg font-bold w-16 bg-white outline-none focus:border-[var(--color-primary-gold)] focus:ring-1 focus:ring-[var(--color-primary-gold)]"
                             />
                           </td>
                           <td className="p-3">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                              className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase inline-block ${
                                 v.stock > 5
                                   ? 'bg-emerald-100 text-emerald-800'
                                   : v.stock > 0
@@ -1288,14 +1688,42 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                                   : 'bg-rose-100 text-rose-800'
                               }`}
                             >
-                              {v.stock > 5 ? 'In Stock' : v.stock > 0 ? 'Low Stock' : 'Out'}
+                              {v.stock > 5 ? 'In Stock' : v.stock > 0 ? 'Low Stock' : 'Out of Stock'}
                             </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteVariant(v.id)}
+                              title="Remove this variant"
+                              className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors inline-flex items-center justify-center"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                <div className="bg-gray-50 px-4 py-2.5 border-t border-gray-200 text-[11px] text-gray-600 flex items-center justify-between font-medium">
+                  <span>Showing all <strong>{variants.length}</strong> active variants</span>
+                  <span>Total Inventory: <strong>{totalStock} units</strong></span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 space-y-3">
+                <AlertCircle className="mx-auto text-gray-400" size={24} />
+                <p className="text-xs text-gray-600 font-semibold">
+                  No active variants. Select colors and sizes above to create variants.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleGenerateVariantMatrix}
+                  className="px-4 py-2 bg-[var(--color-primary-gold)] text-[var(--color-dark)] text-xs font-bold uppercase rounded-xl hover:shadow-gold-sm"
+                >
+                  Generate Variants
+                </button>
               </div>
             )}
           </div>

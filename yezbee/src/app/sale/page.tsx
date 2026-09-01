@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { getSafeImageUrl } from '@/lib/utils';
 import { ProductCardSkeleton } from '@/components/ui/Skeleton';
 
-const ALL_SIZES = ['S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
+const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL'] as const;
 
 const SALE_TARGET_DATE = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

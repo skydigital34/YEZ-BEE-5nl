@@ -56,7 +56,7 @@ export const FILTER_OPTIONS = {
     { label: 'Silver', value: 'silver', hex: '#C0C0C0' },
     { label: 'Multicolor', value: 'multicolor', hex: 'linear-gradient' },
   ],
-  sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', 'Free Size'],
+  sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL', '6XL', '7XL', 'Free Size'],
   fabrics: [
     { label: 'Silk', value: 'silk' },
     { label: 'Cotton', value: 'cotton' },
