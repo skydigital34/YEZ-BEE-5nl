@@ -86,7 +86,7 @@ export const productFormSchema = z.object({
   price: z.number().positive('Price must be positive').max(999999, 'Price is too high'),
   originalPrice: z.number().positive('Original price must be positive').max(999999, 'Price is too high').optional(),
   images: z.array(z.string().url('Invalid image URL')).min(1, 'At least one image is required'),
-  colors: z.array(z.object({ name: z.string(), hex: z.string().regex(/^#/, 'Must be a hex color'), image: z.string() })).min(1, 'At least one color is required'),
+  colors: z.array(z.object({ name: z.string(), hex: z.string(), image: z.string().optional() })).min(1, 'At least one color is required'),
   sizes: z.array(z.string()).min(1, 'At least one size is required'),
   fabrics: z.array(z.string()).optional(),
   occasions: z.array(z.string()).optional(),

@@ -26,7 +26,7 @@ export interface CatalogProduct {
   name: string;
   category: string;
   categoryName: string;
-  productType?: 'FEEDING' | 'NON-FEEDING' | null;
+  productType?: 'FEEDING' | 'NON-FEEDING' | 'BOTH' | null;
   subcategory: string;
   shortDescription: string;
   description: string;
@@ -265,7 +265,9 @@ export function getProductsByCategory(categorySlug: string, productType?: 'FEEDI
 
     if (targetType && targetType !== 'all') {
       const normType = targetType.toUpperCase();
-      return (p.productType || '').toUpperCase() === normType;
+      const pType = (p.productType || '').toUpperCase();
+      if (pType === 'BOTH') return true;
+      return pType === normType;
     }
 
     return true;

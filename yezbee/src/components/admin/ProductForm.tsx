@@ -104,8 +104,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
   const [selectedCategory, setSelectedCategory] = useState('casuals');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [productType, setProductType] = useState<'FEEDING' | 'NON-FEEDING' | null>('FEEDING');
-  const [subcategory, setSubcategory] = useState<'Feeding' | 'Non-Feeding' | '' | null>('Feeding');
+  const [productType, setProductType] = useState<'FEEDING' | 'NON-FEEDING' | 'BOTH' | null>('FEEDING');
+  const [subcategory, setSubcategory] = useState<'Feeding' | 'Non-Feeding' | 'Both' | '' | null>('Feeding');
 
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
@@ -242,9 +242,9 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
     const hasFeeding = catSlug === 'casuals' || catSlug === 'party-wear' || catSlug === 'ethnic-wear' || catSlug === 'peplum-tops';
     if (hasFeeding) {
-      const pType = (p.productType || (p.subcategory === 'Non-Feeding' ? 'NON-FEEDING' : 'FEEDING')).toUpperCase() as 'FEEDING' | 'NON-FEEDING';
+      const pType = (p.productType || (p.subcategory === 'Non-Feeding' ? 'NON-FEEDING' : p.subcategory === 'Both' ? 'BOTH' : 'FEEDING')).toUpperCase() as 'FEEDING' | 'NON-FEEDING' | 'BOTH';
       setProductType(pType);
-      setSubcategory(pType === 'NON-FEEDING' ? 'Non-Feeding' : 'Feeding');
+      setSubcategory(pType === 'NON-FEEDING' ? 'Non-Feeding' : pType === 'BOTH' ? 'Both' : 'Feeding');
     } else {
       setProductType(null);
       setSubcategory(null);
@@ -549,8 +549,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   };
 
   const handleAddCustomColor = () => {
-    if (!customColorName.trim()) return;
-    const newCol = { name: customColorName.trim(), hex: customColorHex };
+    let hex = customColorHex.trim();
+    let nameVal = customColorName.trim();
+
+    if (!nameVal && !hex) return;
+
+    if (hex && !hex.startsWith('#') && !hex.startsWith('rgb') && !hex.startsWith('hsl') && /^[0-9A-Fa-f]{3,8}$/.test(hex)) {
+      hex = `#${hex}`;
+    }
+    if (!hex) hex = '#000000';
+
+    if (!nameVal) {
+      nameVal = hex.toUpperCase();
+    }
+
+    const newCol = { name: nameVal, hex };
+
     if (!selectedColors.some((c) => c.name.toLowerCase() === newCol.name.toLowerCase())) {
       const newColors = [...selectedColors, newCol];
       setSelectedColors(newColors);
@@ -570,8 +584,12 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
         });
       });
       setVariants((prev) => [...prev, ...newItems]);
+      showToast(`Added custom color "${newCol.name}" (${newCol.hex})`);
+    } else {
+      showToast(`Color "${newCol.name}" is already in active selection`, 'error');
     }
     setCustomColorName('');
+    setCustomColorHex('#C9A84C');
   };
 
   const handleToggleSize = (sz: string) => {
@@ -911,8 +929,8 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
 
     if (!name.trim()) errs.name = 'Product name is required';
     if (!selectedCategory) errs.category = 'Category is required';
-    if (hasFeedingSplit && (!productType || (productType !== 'FEEDING' && productType !== 'NON-FEEDING'))) {
-      errs.productType = 'Feeding or Non-Feeding selection is required for this category';
+    if (hasFeedingSplit && (!productType || (productType !== 'FEEDING' && productType !== 'NON-FEEDING' && productType !== 'BOTH'))) {
+      errs.productType = 'Feeding, Non-Feeding, or Both selection is required for this category';
     }
     if (!price || Number(price) <= 0) errs.price = 'Selling price must be greater than 0';
     if (compareAtPrice && Number(compareAtPrice) < Number(price)) {
@@ -996,7 +1014,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       categorySlug: selectedCategory,
       categoryName: currentCategoryConfig?.name || selectedCategory.toUpperCase(),
       productType: hasFeedingSplit ? productType : null,
-      subcategory: hasFeedingSplit ? (productType === 'FEEDING' ? 'Feeding' : 'Non-Feeding') : null,
+      subcategory: hasFeedingSplit ? (productType === 'FEEDING' ? 'Feeding' : productType === 'NON-FEEDING' ? 'Non-Feeding' : 'Both') : null,
       shortDescription,
       description: description || shortDescription,
       brand,
@@ -1296,14 +1314,14 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                   <label className="text-xs font-bold text-gray-700 block mb-1">
                     Subcategory (Feeding Classification) <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center gap-3 pt-0.5">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-0.5">
                     <button
                       type="button"
                       onClick={() => {
                         setProductType('FEEDING');
                         setSubcategory('Feeding');
                       }}
-                      className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-xl border transition-all ${
+                      className={`w-full sm:flex-1 py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
                         productType === 'FEEDING'
                           ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-black'
@@ -1317,13 +1335,27 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                         setProductType('NON-FEEDING');
                         setSubcategory('Non-Feeding');
                       }}
-                      className={`flex-1 py-2.5 px-4 text-xs font-bold rounded-xl border transition-all ${
+                      className={`w-full sm:flex-1 py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
                         productType === 'NON-FEEDING'
                           ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-black'
                       }`}
                     >
                       NON-FEEDING
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProductType('BOTH');
+                        setSubcategory('Both');
+                      }}
+                      className={`w-full sm:flex-1 py-2.5 px-3 text-xs font-bold rounded-xl border transition-all ${
+                        productType === 'BOTH'
+                          ? 'bg-[var(--color-dark)] text-white border-[var(--color-dark)] shadow-sm'
+                          : 'bg-white text-gray-700 border-gray-300 hover:border-black'
+                      }`}
+                    >
+                      BOTH
                     </button>
                   </div>
                   {errors.productType && (
@@ -1423,7 +1455,7 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     onClick={handleSelectAllColors}
                     className="text-[var(--color-primary-gold)] hover:underline"
                   >
-                    Select All
+                    Select All Presets
                   </button>
                   <span className="text-gray-300">|</span>
                   <button
@@ -1431,13 +1463,44 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     onClick={handleClearAllColors}
                     className="text-gray-500 hover:text-rose-600 hover:underline"
                   >
-                    Clear
+                    Clear All
                   </button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+
+              {/* Active Selected Colors List with Hex codes & Remove buttons */}
+              {selectedColors.length > 0 && (
+                <div className="mb-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200/60 space-y-1.5">
+                  <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">
+                    Active Selected & Custom Colors:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedColors.map((col) => (
+                      <span
+                        key={col.name}
+                        className="px-2.5 py-1 rounded-lg bg-white border border-gray-300 text-xs font-bold text-gray-800 flex items-center gap-2 shadow-xs"
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full border border-gray-400 shrink-0" style={{ backgroundColor: col.hex }} />
+                        <span>{col.name}</span>
+                        <span className="text-[10px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{col.hex}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleColor(col)}
+                          className="text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded p-0.5"
+                          title={`Remove ${col.name}`}
+                        >
+                          <X size={12} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Preset Colors */}
+              <div className="flex flex-wrap gap-2 mb-4">
                 {PRESET_COLORS.map((col) => {
-                  const isSelected = selectedColors.some((c) => c.name === col.name);
+                  const isSelected = selectedColors.some((c) => c.name.toLowerCase() === col.name.toLowerCase());
                   return (
                     <button
                       key={col.name}
@@ -1456,33 +1519,58 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                 })}
               </div>
 
-              <div className="pt-3 flex items-center gap-3 max-w-md">
-                <input
-                  type="text"
-                  placeholder="Add custom color name"
-                  value={customColorName}
-                  onChange={(e) => setCustomColorName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddCustomColor();
-                    }
-                  }}
-                  className="flex-1 px-3 py-1.5 text-xs border rounded-xl outline-none"
-                />
-                <input
-                  type="color"
-                  value={customColorHex}
-                  onChange={(e) => setCustomColorHex(e.target.value)}
-                  className="h-8 w-10 rounded border p-0.5 cursor-pointer"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddCustomColor}
-                  className="px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-xl hover:bg-black transition-colors"
-                >
-                  + Add Color
-                </button>
+              {/* Custom Color Code Adder (Accepts Any Hex / Color Code String) */}
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+                <span className="text-[11px] font-bold text-gray-700 block">
+                  Add Custom Color (Accepts Any Color Name & Hex Code):
+                </span>
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Color Name (e.g. Royal Maroon)"
+                    value={customColorName}
+                    onChange={(e) => setCustomColorName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomColor();
+                      }
+                    }}
+                    className="w-full sm:flex-1 px-3 py-1.5 text-xs border border-gray-300 rounded-xl outline-none bg-white font-medium focus:border-[var(--color-primary-gold)]"
+                  />
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      placeholder="Hex Code (e.g. #FF5733 or FF5733)"
+                      value={customColorHex}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomColorHex(val);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomColor();
+                        }
+                      }}
+                      className="w-full sm:w-44 px-3 py-1.5 text-xs border border-gray-300 rounded-xl outline-none font-mono font-bold uppercase bg-white focus:border-[var(--color-primary-gold)]"
+                    />
+                    <input
+                      type="color"
+                      value={customColorHex.startsWith('#') && (customColorHex.length === 7 || customColorHex.length === 4) ? customColorHex : '#C9A84C'}
+                      onChange={(e) => setCustomColorHex(e.target.value)}
+                      className="h-8 w-10 rounded-lg border border-gray-300 p-0.5 cursor-pointer shrink-0 bg-white"
+                      title="Pick color visually"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomColor}
+                      className="px-4 py-1.5 bg-[var(--color-dark)] text-white text-xs font-bold rounded-xl hover:bg-black transition-colors shrink-0 shadow-xs"
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

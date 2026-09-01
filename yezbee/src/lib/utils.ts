@@ -187,8 +187,8 @@ export function getSafeProductImage(
     const rawArray = Array.isArray(input.images)
       ? input.images
       : Array.isArray(input.galleryImages)
-      ? input.galleryImages
-      : [];
+        ? input.galleryImages
+        : [];
 
     const imagesArray = [...rawArray].sort((a: any, b: any) => {
       const orderA = typeof a?.order === 'number' ? a.order : (typeof a?.sortOrder === 'number' ? a.sortOrder : 9999);
@@ -384,17 +384,17 @@ export function normalizeProduct(p: any): any {
   const colors = Array.isArray(p.colors) && p.colors.length > 0
     ? p.colors.map((c: any) => (typeof c === 'string' ? { name: c, hex: '#000000' } : c))
     : variants.length > 0
-    ? Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))).map((name: any) => ({
+      ? Array.from(new Set(variants.map((v: any) => v.color).filter(Boolean))).map((name: any) => ({
         name: name,
         hex: variants.find((v: any) => v.color === name)?.colorHex || '#000000',
       }))
-    : [{ name: 'Standard', hex: '#000000' }];
+      : [{ name: 'Standard', hex: '#000000' }];
 
   const sizes = Array.isArray(p.sizes) && p.sizes.length > 0
     ? p.sizes
     : variants.length > 0
-    ? Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)))
-    : ['S', 'M', 'L'];
+      ? Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)))
+      : ['S', 'M', 'L'];
 
   const totalStock = variants.length > 0 ? variants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0) : (Number(p.stock) || 10);
 
@@ -456,12 +456,31 @@ export function matchesCategory(p: any, categorySlug: string, subcategoryType?: 
   if (!catMatches) return false;
 
   if (subcategoryType && subcategoryType !== 'all') {
-    const targetType = subcategoryType.toUpperCase();
-    const pType = (p.productType || p.subcategory || '').toString().toUpperCase();
-    if (pType.includes(targetType) || targetType.includes(pType)) {
+    const targetType = subcategoryType.toUpperCase().trim();
+    const rawPType = (p.productType || p.subcategory || '').toString().toUpperCase().trim();
+
+    if (rawPType === 'BOTH' || rawPType === 'FEEDING & NON-FEEDING' || rawPType === 'FEEDING_AND_NON_FEEDING') {
       return true;
     }
-    return false;
+
+    if (targetType === 'FEEDING') {
+      if (rawPType === 'NON-FEEDING' || rawPType === 'NON FEEDING' || rawPType === 'NON_FEEDING') {
+        return false;
+      }
+      return rawPType === 'FEEDING' || (rawPType.includes('FEEDING') && !rawPType.includes('NON'));
+    }
+
+    if (targetType === 'NON-FEEDING' || targetType === 'NONFEEDING') {
+      if (rawPType === 'NON-FEEDING' || rawPType === 'NON FEEDING' || rawPType === 'NON_FEEDING') {
+        return true;
+      }
+      if (rawPType === 'FEEDING') {
+        return false;
+      }
+      return !rawPType.includes('FEEDING') || rawPType.includes('NON');
+    }
+
+    return rawPType === targetType || rawPType.includes(targetType);
   }
 
   return true;

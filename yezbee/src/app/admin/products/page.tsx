@@ -487,6 +487,7 @@ export default function AdminProductsPage() {
               <option value="all">All Product Types</option>
               <option value="FEEDING">FEEDING</option>
               <option value="NON-FEEDING">NON-FEEDING</option>
+              <option value="BOTH">BOTH (FEEDING & NON-FEEDING)</option>
             </select>
           </div>
 
@@ -617,9 +618,9 @@ export default function AdminProductsPage() {
                         </span>
                         {p.productType && (
                           <span className={`block mt-1 text-[10px] font-bold uppercase tracking-wider ${
-                            p.productType === 'FEEDING' ? 'text-amber-700' : 'text-gray-500'
+                            p.productType === 'FEEDING' ? 'text-amber-700' : p.productType === 'BOTH' ? 'text-purple-700' : 'text-gray-500'
                           }`}>
-                            ↳ {p.productType}
+                            ↳ {p.productType === 'BOTH' ? 'BOTH (FEEDING & NON)' : p.productType}
                           </span>
                         )}
                       </td>
