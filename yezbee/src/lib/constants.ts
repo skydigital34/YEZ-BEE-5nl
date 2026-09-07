@@ -115,8 +115,8 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export const SHIPPING_METHODS = [
-  { id: 'standard', name: 'Standard Delivery', description: '5-7 business days', price: 699, freeAbove: 15000 },
-  { id: 'express', name: 'Express Delivery', description: '2-3 business days', price: 1299, freeAbove: 25000 },
+  { id: 'standard', name: 'Standard Delivery', description: '5-7 business days', price: 0, freeAbove: 0 },
+  { id: 'express', name: 'Express Delivery', description: '2-3 business days', price: 0, freeAbove: 0 },
   { id: 'overnight', name: 'Overnight Delivery', description: 'Next business day', price: 2499, freeAbove: 50000 },
 ] as const;
 

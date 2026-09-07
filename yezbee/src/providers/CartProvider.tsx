@@ -41,15 +41,31 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const saved = localStorage.getItem('yezbee_cart');
       if (saved) {
-        setLocalCart(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setLocalCart(parsed);
+        } else if (parsed && typeof parsed === 'object') {
+          if (Array.isArray(parsed.state?.items)) {
+            setLocalCart(parsed.state.items);
+          } else if (Array.isArray(parsed.items)) {
+            setLocalCart(parsed.items);
+          } else {
+            setLocalCart([]);
+          }
+        } else {
+          setLocalCart([]);
+        }
       }
     } catch {
+      setLocalCart([]);
     }
   }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem('yezbee_cart', JSON.stringify(localCart));
+      if (Array.isArray(localCart)) {
+        localStorage.setItem('yezbee_cart', JSON.stringify(localCart));
+      }
     } catch {
     }
   }, [localCart]);
@@ -57,15 +73,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addToCart = useCallback(
     (item: LocalCartItem) => {
       setLocalCart((prev) => {
-        const existingIndex = prev.findIndex(
+        const current = Array.isArray(prev) ? prev : [];
+        const existingIndex = current.findIndex(
           (i) => String(i.id) === String(item.id) && i.color === item.color && i.size === item.size
         );
         if (existingIndex > -1) {
-          const updated = [...prev];
+          const updated = [...current];
           updated[existingIndex].quantity += item.quantity || 1;
           return updated;
         }
-        return [...prev, item];
+        return [...current, item];
       });
 
       addNotification({
@@ -79,7 +96,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const removeFromCart = useCallback((id: string | number) => {
-    setLocalCart((prev) => prev.filter((i) => String(i.id) !== String(id)));
+    setLocalCart((prev) => (Array.isArray(prev) ? prev.filter((i) => String(i.id) !== String(id)) : []));
   }, []);
 
   const updateLocalQuantity = useCallback((id: string | number, quantity: number) => {
@@ -88,15 +105,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setLocalCart((prev) =>
-      prev.map((i) => (String(i.id) === String(id) ? { ...i, quantity } : i))
+      Array.isArray(prev) ? prev.map((i) => (String(i.id) === String(id) ? { ...i, quantity } : i)) : []
     );
   }, [removeFromCart]);
 
-  const totalAmount = localCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const safeCart = Array.isArray(localCart) ? localCart : [];
+  const totalAmount = safeCart.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
 
   const value: CartContextValue = {
-    items: localCart,
-    itemCount: localCart.reduce((sum, i) => sum + i.quantity, 0),
+    items: safeCart,
+    itemCount: safeCart.reduce((sum, i) => sum + (Number(i?.quantity) || 1), 0),
     totalAmount,
     subtotal: totalAmount,
     discountCode: store.discountCode,

@@ -11,11 +11,13 @@ import { useAuth } from '@/providers/AuthProvider';
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { items: cartItems } = useCart();
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
   const { items: wishlistItems } = useWishlist();
+  const safeWishlistItems = Array.isArray(wishlistItems) ? wishlistItems : [];
   const { isAuthenticated, openAuthModal } = useAuth();
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const wishlistCount = wishlistItems.length;
+  const cartCount = safeCartItems.reduce((total, item) => total + (Number(item?.quantity) || 1), 0);
+  const wishlistCount = safeWishlistItems.length;
 
   const isActive = (href: string) => pathname === href;
 

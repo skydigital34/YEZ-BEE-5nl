@@ -35,8 +35,8 @@ const defaultItems: TrustBadgeItem[] = [
         <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
       </svg>
     ),
-    title: 'Free Delivery',
-    description: 'Free shipping on orders above ₹999',
+    title: 'Free Express Delivery',
+    description: 'Free express shipping on all products',
   },
   {
     icon: (

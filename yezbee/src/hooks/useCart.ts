@@ -59,11 +59,8 @@ export function useCart() {
   const itemCount = useMemo(() => store.getItemCount(), [store.items]);
 
   const shippingEstimate = useMemo(() => {
-    const sub = subtotal;
-    if (sub >= 15000) return 0;
-    if (sub >= 5000) return 499;
-    return 699;
-  }, [subtotal]);
+    return 0;
+  }, []);
 
   const taxEstimate = useMemo(() => {
     return Math.round(subtotal * 0.12);

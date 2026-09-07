@@ -24,17 +24,18 @@ import { getSafeImageUrl } from '@/lib/utils';
 
 export default function CartPage() {
   const { items, updateQuantity, removeFromCart, totalAmount, clearCart } = useCart();
+  const safeItems = Array.isArray(items) ? items : [];
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const [giftWrap, setGiftWrap] = useState(false);
 
   const subtotal = totalAmount;
   const discount = couponApplied ? subtotal * 0.15 : 0;
-  const freeShippingThreshold = 5000;
-  const shipping = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 499;
+  const freeShippingThreshold = 0;
+  const shipping = 0;
   const giftWrapFee = giftWrap ? 199 : 0;
   const finalTotal = Math.max(0, subtotal - discount + shipping + giftWrapFee);
-  const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+  const freeShippingProgress = 100;
 
   const applyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +68,7 @@ export default function CartPage() {
           </Link>
         </div>
 
-        {items.length === 0 ? (
+        {safeItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-[var(--color-champagne)] shadow-soft-sm text-center">
             <div className="h-20 w-20 rounded-full bg-[var(--color-champagne)]/40 flex items-center justify-center text-[var(--color-primary-gold)] mb-4">
               <ShoppingBag size={36} />
@@ -91,9 +92,7 @@ export default function CartPage() {
               <div className="bg-white p-4 rounded-2xl border border-[var(--color-champagne)]/60 shadow-soft-sm">
                 <div className="flex items-center justify-between text-xs font-bold mb-2">
                   <span className="text-[var(--color-dark)]">
-                    {subtotal >= freeShippingThreshold
-                      ? '🎉 You have unlocked Free Express Delivery!'
-                      : `Add ₹${(freeShippingThreshold - subtotal).toLocaleString()} more for Free Express Shipping`}
+                    🎉 You have unlocked Free Express Delivery on all orders!
                   </span>
                   <span className="text-[var(--color-primary-gold)]">{Math.round(freeShippingProgress)}%</span>
                 </div>
@@ -107,7 +106,7 @@ export default function CartPage() {
 
               <div className="flex flex-col gap-4">
                 <AnimatePresence>
-                  {items.map((item) => (
+                  {safeItems.map((item) => (
                     <motion.div
                       key={`${item.id}-${item.size}-${item.color}`}
                       layout

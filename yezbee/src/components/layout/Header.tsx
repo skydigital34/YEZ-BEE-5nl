@@ -25,11 +25,13 @@ export default function Header() {
   const isSolidHeader = !isHomepage || scrolled || menuActive;
 
   const { items: cartItems } = useCart();
+  const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
   const { items: wishlistItems } = useWishlist();
+  const safeWishlistItems = Array.isArray(wishlistItems) ? wishlistItems : [];
   const { isAuthenticated, openAuthModal, user } = useAuth();
 
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
-  const wishlistCount = wishlistItems.length;
+  const cartCount = safeCartItems.reduce((total, item) => total + (Number(item?.quantity) || 1), 0);
+  const wishlistCount = safeWishlistItems.length;
 
   useEffect(() => {
     const handleScroll = () => {

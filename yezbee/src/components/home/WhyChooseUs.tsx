@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils';
 const features = [
   {
     icon: Truck,
-    title: 'Free Shipping',
-    description: 'Free shipping on all orders above ₹999. Delivered to your doorstep within 4-7 business days.',
+    title: 'Free Express Shipping',
+    description: 'Free express shipping on all products. Delivered to your doorstep within 2-4 business days.',
   },
   {
     icon: Tag,

@@ -31,12 +31,13 @@ declare global {
 
 const SHIPPING_OPTIONS = [
   { value: 'standard' as ShippingMethod, label: 'Standard Atelier Delivery', time: '4-6 business days', cost: 0 },
-  { value: 'express' as ShippingMethod, label: 'Express Priority Shipping', time: '2-3 business days', cost: 499 },
+  { value: 'express' as ShippingMethod, label: 'Express Priority Shipping', time: '2-3 business days', cost: 0 },
   { value: 'nextday' as ShippingMethod, label: 'Next-Day White Glove Courier', time: 'Tomorrow guaranteed', cost: 999 },
 ];
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
+  const safeItems = Array.isArray(items) ? items : [];
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const router = useRouter();
 
@@ -84,7 +85,7 @@ export default function CheckoutPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const subtotal = totalAmount || (items.reduce((sum, i) => sum + i.price * i.quantity, 0));
+  const subtotal = totalAmount || (safeItems.reduce((sum, i) => sum + (Number(i?.price) || 0) * (Number(i?.quantity) || 1), 0));
   const shippingCost = SHIPPING_OPTIONS.find((o) => o.value === shippingMethod)?.cost || 0;
   const finalTotal = Math.max(0, subtotal + shippingCost);
 
@@ -426,10 +427,10 @@ export default function CheckoutPage() {
               </h3>
 
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                {items.length === 0 ? (
+                {safeItems.length === 0 ? (
                   <p className="text-xs text-gray-500 py-4 text-center">Your bag is empty.</p>
                 ) : (
-                  items.map((item) => (
+                  safeItems.map((item) => (
                     <div key={item.id} className="flex gap-3 items-center">
                       <div className="relative aspect-[3/4] w-12 rounded-lg overflow-hidden bg-[#F7F4EE] flex-shrink-0">
                         {item.image ? (
