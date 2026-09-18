@@ -24,29 +24,31 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "YEZ BEE FASHION - Luxury Women's Clothing | Premium Fashion Brand",
+  title: "Yezbee Fashion - Best Maternity Kurtis for Women",
   description:
-    'Discover luxury womenswear at YEZ BEE FASHION. Premium quality fabrics, timeless designs, and sophisticated elegance for the modern woman. Shop exclusive collections online.',
+    "Shop the best maternity kurtis and kurti sets for women online. Enjoy stylish, comfortable, and pregnancy-friendly designs perfect for every occasion.",
   keywords: [
-    'luxury fashion',
+    'maternity kurtis',
+    'maternity kurti sets',
+    'pregnancy friendly dresses',
     'womens clothing',
-    'premium fashion brand',
-    'designer wear',
     'YEZ BEE',
-    'elegant dresses',
-    'high-end fashion',
+    'maternity fashion',
+    'comfort kurtis for women',
   ],
   openGraph: {
-    title: "YEZ BEE FASHION - Luxury Women's Clothing",
-    description: 'Premium quality fabrics, timeless designs, and sophisticated elegance for the modern woman.',
+    title: "Yezbee Fashion - Best Maternity Kurtis for Women",
+    description:
+      "Shop the best maternity kurtis and kurti sets for women online. Enjoy stylish, comfortable, and pregnancy-friendly designs perfect for every occasion.",
     type: 'website',
     locale: 'en_IN',
-    siteName: 'YEZ BEE FASHION',
+    siteName: 'Yezbee Fashion',
   },
   twitter: {
     card: 'summary_large_image',
-    title: "YEZ BEE FASHION - Luxury Women's Clothing",
-    description: 'Premium quality fabrics, timeless designs, and sophisticated elegance for the modern woman.',
+    title: "Yezbee Fashion - Best Maternity Kurtis for Women",
+    description:
+      "Shop the best maternity kurtis and kurti sets for women online. Enjoy stylish, comfortable, and pregnancy-friendly designs perfect for every occasion.",
   },
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://yezbeefashion.com' },

@@ -143,7 +143,7 @@ export function generateWebsiteJsonLd() {
     '@id': `${SITE_URL}/#website`,
     url: SITE_URL,
     name: SITE_NAME,
-    description: 'Luxury women\'s fashion — curated elegance for the modern woman.',
+    description: 'Shop the best maternity kurtis and kurti sets for women online. Enjoy stylish, comfortable, and pregnancy-friendly designs perfect for every occasion.',
     publisher: {
       '@id': `${SITE_URL}/#organization`,
     },
