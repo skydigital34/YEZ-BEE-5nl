@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import DataTable from '@/components/admin/DataTable'
 import { api } from '@/lib/api'
+import InvoiceDownloadDropdown from '@/components/admin/InvoiceDownloadDropdown'
+import { InvoiceData, exportBulkOrdersAsExcel } from '@/lib/invoiceExporter'
 
 interface Order {
   id: string
@@ -159,9 +161,110 @@ export default function OrdersPage() {
         </span>
       ),
     },
+    {
+      key: 'invoice',
+      header: 'Invoice',
+      sortable: false,
+      render: (row: Order) => {
+        const invoiceData: InvoiceData = {
+          id: row.id,
+          date: row.date,
+          status: row.status,
+          payment: row.payment,
+          paymentMethod: 'Online Payment',
+          subtotal: row.total,
+          shipping: 0,
+          discount: 0,
+          tax: Math.round(row.total * 0.18),
+          total: row.total,
+          customer: {
+            name: row.customer,
+            email: row.email,
+            phone: row.phone,
+          },
+          shippingAddress: {
+            line1: 'Customer Address',
+            city: 'Hyderabad',
+            state: 'Telangana',
+            pincode: '500034',
+            country: 'India',
+          },
+          items: [
+            {
+              id: 1,
+              name: `Order Items (${row.items})`,
+              price: row.total,
+              quantity: 1,
+            },
+          ],
+        }
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <InvoiceDownloadDropdown order={invoiceData} buttonStyle="outline" buttonText="Invoice" />
+          </div>
+        )
+      },
+    },
   ]
 
+  const handleExportAll = () => {
+    const formatted: InvoiceData[] = filteredOrders.map((o) => ({
+      id: o.id,
+      date: o.date,
+      status: o.status,
+      payment: o.payment,
+      paymentMethod: 'Online Payment',
+      subtotal: o.total,
+      shipping: 0,
+      discount: 0,
+      tax: Math.round(o.total * 0.18),
+      total: o.total,
+      customer: {
+        name: o.customer,
+        email: o.email,
+        phone: o.phone,
+      },
+      shippingAddress: {
+        line1: 'Customer Address',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        pincode: '500034',
+        country: 'India',
+      },
+      items: [
+        {
+          id: 1,
+          name: `Order Items (${o.items})`,
+          price: o.total,
+          quantity: 1,
+        },
+      ],
+    }))
+    exportBulkOrdersAsExcel(formatted)
+  }
+
   const bulkActions = [
+    { label: 'Export Selected (Excel)', icon: Download, action: () => {
+      const selected = filteredOrders.filter(o => selectedIds.includes(o.id))
+      if (selected.length > 0) {
+        const formatted: InvoiceData[] = selected.map((o) => ({
+          id: o.id,
+          date: o.date,
+          status: o.status,
+          payment: o.payment,
+          paymentMethod: 'Online Payment',
+          subtotal: o.total,
+          shipping: 0,
+          discount: 0,
+          tax: Math.round(o.total * 0.18),
+          total: o.total,
+          customer: { name: o.customer, email: o.email, phone: o.phone },
+          shippingAddress: { line1: 'Address', city: 'City', state: 'State', pincode: '000000', country: 'India' },
+          items: [{ id: 1, name: `Order Items (${o.items})`, price: o.total, quantity: 1 }],
+        }))
+        exportBulkOrdersAsExcel(formatted)
+      }
+    }},
     { label: 'Mark as Confirmed', icon: Eye, action: () => {} },
     { label: 'Mark as Shipped', icon: Eye, action: () => {} },
     { label: 'Mark as Delivered', icon: Eye, action: () => {} },
@@ -185,9 +288,12 @@ export default function OrdersPage() {
             Date Range
             <ChevronDown size={14} />
           </button>
-          <button className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-600 bg-white rounded-xl border border-gray-100 shadow-sm hover:bg-[#FAF7F2] transition-all">
+          <button
+            onClick={handleExportAll}
+            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-white bg-[#C9A84C] hover:bg-[#B8973B] rounded-xl shadow-md shadow-[#C9A84C]/20 transition-all"
+          >
             <Download size={15} />
-            Export
+            Export Excel
           </button>
         </div>
       </div>

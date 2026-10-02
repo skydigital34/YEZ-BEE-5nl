@@ -9,6 +9,9 @@ import {
   Package, CreditCard, MapPin, User, Clock, AlertCircle,
   CheckCircle, Truck, ShoppingBag, FileText
 } from 'lucide-react'
+import InvoiceDownloadDropdown from '@/components/admin/InvoiceDownloadDropdown'
+import InvoiceDownloadModal from '@/components/admin/InvoiceDownloadModal'
+import { InvoiceData } from '@/lib/invoiceExporter'
 
 const orderData = {
   id: 'ORD-2026-0042',
@@ -92,6 +95,7 @@ export default function OrderDetailPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
 
   useEffect(() => {
     if (!orderId) return
@@ -174,13 +178,15 @@ export default function OrderDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <InvoiceDownloadDropdown order={activeData} buttonText="Download Invoice" buttonStyle="primary" />
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-600 bg-white rounded-xl border border-gray-100 shadow-sm hover:bg-[#FAF7F2] transition-all"
+            onClick={() => setShowInvoiceModal(true)}
+            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-gray-700 bg-white rounded-xl border border-gray-200 shadow-sm hover:bg-[#FAF7F2] transition-all"
           >
-            <Printer size={15} />
-            Print Invoice
+            <Printer size={14} className="text-[#C9A84C]" />
+            All Formats
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -499,6 +505,12 @@ export default function OrderDetailPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <InvoiceDownloadModal
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+        order={activeData}
+      />
     </motion.div>
   )
 }

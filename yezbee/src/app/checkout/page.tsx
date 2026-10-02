@@ -109,7 +109,25 @@ export default function CheckoutPage() {
           payment: 'unpaid',
         };
         
-        await api.createOrder(orderData);
+        const createdOrder = await api.createOrder(orderData);
+
+        // Send order notification (Email & WhatsApp) marked clearly as COD - Unpaid
+        try {
+          await fetch('/api/notifications/send-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: createdOrder?.data?.id || Date.now(),
+              items: orderData.items,
+              shippingAddress: orderData.shippingAddress,
+              totalAmount: orderData.totalAmount,
+              paymentMethod: 'COD (Unpaid - Pay on Delivery)',
+              paymentStatus: 'unpaid',
+            }),
+          });
+        } catch (nErr) {
+          console.error('Failed to trigger order notification:', nErr);
+        }
 
         toast.success('Order placed successfully with Cash on Delivery! 📦');
         clearCart();
@@ -157,7 +175,25 @@ export default function CheckoutPage() {
               status: 'confirmed',
               payment: 'paid',
             };
-            await api.createOrder(orderData);
+            const createdOrder = await api.createOrder(orderData);
+
+            // Send order notification (Email & WhatsApp) marked clearly as Paid
+            try {
+              await fetch('/api/notifications/send-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId: createdOrder?.data?.id || response.razorpay_order_id,
+                  items: orderData.items,
+                  shippingAddress: orderData.shippingAddress,
+                  totalAmount: orderData.totalAmount,
+                  paymentMethod: 'Razorpay Online Payment (PAID)',
+                  paymentStatus: 'paid',
+                }),
+              });
+            } catch (nErr) {
+              console.error('Failed to trigger order notification:', nErr);
+            }
 
             toast.success('Payment Verified! Order Confirmed 🎉');
             clearCart();
