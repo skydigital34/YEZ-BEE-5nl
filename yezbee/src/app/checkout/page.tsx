@@ -99,9 +99,29 @@ export default function CheckoutPage() {
     setIsSubmitting(true);
 
     try {
+      const generatedOrderNumber = `${new Date().getFullYear()}${Math.floor(100000 + Math.random() * 900000)}`;
+
       if (paymentMethod === 'cod') {
         const orderData = {
-          items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: (i as any).size || null })),
+          orderNumber: generatedOrderNumber,
+          items: items.map((i) => {
+            const itemSize = i.size || (i as any).variant?.size || (i as any).meta?.size || null;
+            const itemColor = i.color || (i as any).variant?.color || (i as any).meta?.color || null;
+            return {
+              product: i.id,
+              productId: i.id,
+              name: i.name,
+              image: i.image || null,
+              quantity: i.quantity,
+              price: i.price,
+              size: itemSize,
+              color: itemColor,
+              meta: {
+                size: itemSize,
+                color: itemColor,
+              },
+            };
+          }),
           shippingAddress: form,
           paymentMethod: 'COD',
           totalAmount: finalTotal,
@@ -117,7 +137,7 @@ export default function CheckoutPage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              orderId: createdOrder?.data?.id || Date.now(),
+              orderId: createdOrder?.data?.orderNumber || createdOrder?.data?.id || generatedOrderNumber,
               items: orderData.items,
               shippingAddress: orderData.shippingAddress,
               totalAmount: orderData.totalAmount,
@@ -166,7 +186,25 @@ export default function CheckoutPage() {
 
             // Save order to Firebase after successful payment
             const orderData = {
-              items: items.map((i) => ({ product: i.id, name: i.name, image: i.image || null, quantity: i.quantity, price: i.price, size: (i as any).size || null })),
+              orderNumber: generatedOrderNumber,
+              items: items.map((i) => {
+                const itemSize = i.size || (i as any).variant?.size || (i as any).meta?.size || null;
+                const itemColor = i.color || (i as any).variant?.color || (i as any).meta?.color || null;
+                return {
+                  product: i.id,
+                  productId: i.id,
+                  name: i.name,
+                  image: i.image || null,
+                  quantity: i.quantity,
+                  price: i.price,
+                  size: itemSize,
+                  color: itemColor,
+                  meta: {
+                    size: itemSize,
+                    color: itemColor,
+                  },
+                };
+              }),
               shippingAddress: form,
               paymentMethod: 'RAZORPAY',
               razorpayOrderId: response.razorpay_order_id,
@@ -183,7 +221,7 @@ export default function CheckoutPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  orderId: createdOrder?.data?.id || response.razorpay_order_id,
+                  orderId: createdOrder?.data?.orderNumber || createdOrder?.data?.id || generatedOrderNumber,
                   items: orderData.items,
                   shippingAddress: orderData.shippingAddress,
                   totalAmount: orderData.totalAmount,
@@ -467,7 +505,7 @@ export default function CheckoutPage() {
                   <p className="text-xs text-gray-500 py-4 text-center">Your bag is empty.</p>
                 ) : (
                   safeItems.map((item) => (
-                    <div key={item.id} className="flex gap-3 items-center">
+                    <div key={`${item.id}-${item.size || ''}-${item.color || ''}`} className="flex gap-3 items-center">
                       <div className="relative aspect-[3/4] w-12 rounded-lg overflow-hidden bg-[#F7F4EE] flex-shrink-0">
                         {item.image ? (
                           <Image src={item.image} alt={item.name} fill sizes="60px" className="object-cover" />
@@ -479,7 +517,19 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-bold text-[var(--color-dark)] line-clamp-1">{item.name}</p>
-                        <p className="text-[11px] text-gray-400">Qty: {item.quantity}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          {item.size && (
+                            <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#FAF7F2] text-[#8C6D23] border border-[#E8DFC8]">
+                              Size: {item.size}
+                            </span>
+                          )}
+                          {item.color && (
+                            <span className="text-[11px] text-gray-500 font-medium">
+                              Color: {item.color}
+                            </span>
+                          )}
+                          <span className="text-[11px] text-gray-400">Qty: {item.quantity}</span>
+                        </div>
                       </div>
                       <span className="text-xs font-bold text-[var(--color-dark)]">₹{(item.price * item.quantity).toLocaleString()}</span>
                     </div>

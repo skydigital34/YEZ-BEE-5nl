@@ -63,11 +63,11 @@ const stats = [
 ]
 
 const recentOrders = [
-  { id: 'ORD-2026-0042', customer: 'Priya Sharma', items: 3, total: '₹42,500', status: 'Confirmed', payment: 'Paid', date: '2 hours ago' },
-  { id: 'ORD-2026-0041', customer: 'Ananya Gupta', items: 1, total: '₹18,900', status: 'Shipped', payment: 'Paid', date: '5 hours ago' },
-  { id: 'ORD-2026-0040', customer: 'Rahul Verma', items: 2, total: '₹35,200', status: 'Processing', payment: 'Paid', date: '8 hours ago' },
-  { id: 'ORD-2026-0039', customer: 'Neha Patel', items: 4, total: '₹67,800', status: 'Delivered', payment: 'Paid', date: '1 day ago' },
-  { id: 'ORD-2026-0038', customer: 'Vikram Singh', items: 1, total: '₹12,500', status: 'Pending', payment: 'Unpaid', date: '1 day ago' },
+  { id: '20260042', customer: 'Priya Sharma', items: 3, total: '₹42,500', status: 'Confirmed', payment: 'Paid', date: '2 hours ago' },
+  { id: '20260041', customer: 'Ananya Gupta', items: 1, total: '₹18,900', status: 'Shipped', payment: 'Paid', date: '5 hours ago' },
+  { id: '20260040', customer: 'Rahul Verma', items: 2, total: '₹35,200', status: 'Processing', payment: 'Paid', date: '8 hours ago' },
+  { id: '20260039', customer: 'Neha Patel', items: 4, total: '₹67,800', status: 'Delivered', payment: 'Paid', date: '1 day ago' },
+  { id: '20260038', customer: 'Vikram Singh', items: 1, total: '₹12,500', status: 'Pending', payment: 'Unpaid', date: '1 day ago' },
 ]
 
 const topProducts = [

@@ -131,6 +131,13 @@ export interface OrderItem {
   quantity: number;
   priceAtPurchase: number;
   totalPrice: number;
+  size?: string;
+  color?: string;
+  meta?: {
+    size?: string;
+    color?: string;
+    [key: string]: any;
+  };
 }
 
 export interface PaymentInfo {
@@ -166,6 +173,8 @@ export interface CartItem {
   product: Product;
   variant: ProductVariant;
   quantity: number;
+  size?: string;
+  color?: string;
 }
 
 export interface Review {

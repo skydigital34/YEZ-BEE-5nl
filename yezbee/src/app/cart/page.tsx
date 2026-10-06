@@ -129,9 +129,18 @@ export default function CartPage() {
                             <Link href={`/product/${item.id}`} className="font-display font-bold text-sm sm:text-base text-[var(--color-dark)] hover:text-[var(--color-primary-gold)] transition-colors line-clamp-1">
                               {item.name}
                             </Link>
-                            <p className="text-xs text-[var(--color-dark)]/50 font-medium mt-0.5">
-                              Color: {item.color} &bull; Size: {item.size}
-                            </p>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {item.size && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#FAF7F2] text-[#8C6D23] border border-[#E8DFC8]">
+                                  Size: {item.size}
+                                </span>
+                              )}
+                              {item.color && (
+                                <span className="text-xs text-[var(--color-dark)]/60 font-medium">
+                                  Color: {item.color}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <span className="font-sans text-base font-bold text-[var(--color-dark)]">
                             ₹{(item.price * item.quantity).toLocaleString('en-IN')}
@@ -141,7 +150,7 @@ export default function CartPage() {
                         <div className="flex items-center justify-between mt-4">
                           <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.id, item.quantity - 1, item.size, item.color)}
                               className="px-2.5 py-1.5 text-gray-600 hover:text-black transition-colors"
                               aria-label="Decrease quantity"
                             >
@@ -149,7 +158,7 @@ export default function CartPage() {
                             </button>
                             <span className="px-3 py-1.5 text-xs font-bold min-w-[28px] text-center">{item.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.id, item.quantity + 1, item.size, item.color)}
                               className="px-2.5 py-1.5 text-gray-600 hover:text-black transition-colors"
                               aria-label="Increase quantity"
                             >
@@ -159,7 +168,7 @@ export default function CartPage() {
 
                           <div className="flex items-center gap-4 text-xs font-medium">
                             <button
-                              onClick={() => removeFromCart(item.id)}
+                              onClick={() => removeFromCart(item.id, item.size, item.color)}
                               className="text-gray-400 hover:text-[var(--color-soft-red)] transition-colors flex items-center gap-1"
                             >
                               <Trash2 size={14} /> Remove

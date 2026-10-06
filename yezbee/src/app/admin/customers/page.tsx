@@ -22,8 +22,8 @@ interface Customer {
 }
 
 const customerOrders = [
-  { id: 'ORD-2026-0042', date: '2026-07-30', total: 50150, status: 'confirmed' },
-  { id: 'ORD-2026-0036', date: '2026-07-20', total: 28900, status: 'delivered' },
+  { id: '20260042', date: '2026-07-30', total: 50150, status: 'confirmed' },
+  { id: '20260036', date: '2026-07-20', total: 28900, status: 'delivered' },
 ]
 
 const customerWishlist = [
@@ -334,7 +334,7 @@ export default function CustomersPage() {
                 {detailTab === 'activity' && (
                   <div className="space-y-3">
                     {[
-                      { action: 'Placed order ORD-2026-0042', time: '2 hours ago' },
+                      { action: 'Placed order 20260042', time: '2 hours ago' },
                       { action: 'Viewed product "Silk Evening Gown"', time: '1 day ago' },
                       { action: 'Added "Velvet Blazer" to wishlist', time: '3 days ago' },
                       { action: 'Left a review on "Handcrafted Saree"', time: '5 days ago' },

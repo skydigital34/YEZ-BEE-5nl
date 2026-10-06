@@ -38,8 +38,8 @@ const NAV_ITEMS = [
 ]
 
 const RECENT_ORDERS = [
-  { id: 'ORD-2026-001', date: '28 Jul 2026', status: 'Delivered', items: 3, total: 10497 },
-  { id: 'ORD-2026-002', date: '15 Jul 2026', status: 'Shipped', items: 1, total: 3999 },
+  { id: '20260001', date: '28 Jul 2026', status: 'Delivered', items: 3, total: 10497 },
+  { id: '20260002', date: '15 Jul 2026', status: 'Shipped', items: 1, total: 3999 },
 ]
 
 const STATUS_COLORS: Record<string, string> = {

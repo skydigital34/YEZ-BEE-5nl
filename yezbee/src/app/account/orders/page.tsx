@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 
 const ALL_ORDERS = Array.from({ length: 12 }, (_, i) => ({
-  id: `ORD-2026-${String(100 + i + 1).padStart(3, '0')}`,
+  id: `2026${String(100 + i + 1).padStart(4, '0')}`,
   date: new Date(Date.now() - i * 86400000 * 7).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
   status: ['Delivered', 'Shipped', 'Processing', 'Cancelled', 'Delivered', 'Shipped', 'Delivered', 'Processing', 'Delivered', 'Shipped', 'Delivered', 'Cancelled'][i],
   items: [2, 1, 3, 1, 2, 1, 4, 2, 1, 3, 2, 1][i],

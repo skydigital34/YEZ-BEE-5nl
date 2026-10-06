@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { formatNumericOrderId } from '@/lib/utils';
 
 // Owner Email and Phone Details
 const OWNER_EMAIL = process.env.OWNER_EMAIL || 'Yezbeefashion@gmail.com';
@@ -9,6 +10,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { orderId, items, shippingAddress, totalAmount, paymentMethod } = body;
+    const cleanOrderId = formatNumericOrderId(orderId);
 
     const customerName = `${shippingAddress?.firstName || ''} ${shippingAddress?.lastName || ''}`.trim() || 'Valued Customer';
     const customerEmail = shippingAddress?.email;
@@ -45,11 +47,11 @@ export async function POST(req: Request) {
       await transporter.sendMail({
         from: `"YEZ BEE Store" <${smtpEmail}>`,
         to: OWNER_EMAIL,
-        subject: `🚨 NEW ORDER RECEIVED! #${orderId || Date.now()}`,
+        subject: `🚨 NEW ORDER RECEIVED! #${cleanOrderId}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <h2 style="color: #C9A84C; margin-top: 0;">🎉 New Customer Order Placed</h2>
-            <p><strong>Order ID:</strong> ${orderId || 'N/A'}</p>
+            <p><strong>Order ID:</strong> ${cleanOrderId}</p>
             <p><strong>Total Amount:</strong> ₹${totalAmount?.toLocaleString()}</p>
             <p><strong>Payment Method:</strong> ${paymentMethod}</p>
             
@@ -85,7 +87,7 @@ export async function POST(req: Request) {
         await transporter.sendMail({
           from: `"YEZ BEE Luxury" <${smtpEmail}>`,
           to: customerEmail,
-          subject: `✨ Order Confirmation - YEZ BEE #${orderId || Date.now()}`,
+          subject: `✨ Order Confirmation - YEZ BEE #${cleanOrderId}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
               <h2 style="color: #C9A84C; margin-top: 0;">Thank You for Your Order, ${customerName}!</h2>

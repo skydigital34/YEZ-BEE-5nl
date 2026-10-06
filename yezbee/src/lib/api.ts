@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { extractErrorMessage } from './utils';
+import { extractErrorMessage, formatNumericOrderId } from './utils';
 import { getAllProducts } from '@/data/products';
 
 
@@ -500,11 +500,31 @@ export const api = {
       const { collection, addDoc } = await import('firebase/firestore');
       const { db } = await import('./firebase');
       const cleanData = JSON.parse(JSON.stringify(data));
+      // Normalize items so size and item metadata are always properly structured and saved
+      if (Array.isArray(cleanData.items)) {
+        cleanData.items = cleanData.items.map((it: any) => {
+          const itemSize = it.size || it.meta?.size || it.variant?.size || it.selectedSize || null;
+          const itemColor = it.color || it.meta?.color || it.variant?.color || it.selectedColor || null;
+          return {
+            ...it,
+            size: itemSize,
+            color: itemColor,
+            meta: {
+              ...(it.meta || {}),
+              size: itemSize,
+              color: itemColor,
+            },
+          };
+        });
+      }
+      // Generate pure numeric order number (digits only, e.g., 2026849201)
+      const numericOrderNumber = cleanData.orderNumber || cleanData.orderId || formatNumericOrderId(`${new Date().getFullYear()}${Math.floor(100000 + Math.random() * 900000)}`);
       const docRef = await addDoc(collection(db, 'orders'), {
         ...cleanData,
+        orderNumber: numericOrderNumber,
         createdAt: new Date().toISOString(),
       });
-      return { success: true, data: { _id: docRef.id, id: docRef.id, ...cleanData } };
+      return { success: true, data: { _id: docRef.id, id: numericOrderNumber, orderNumber: numericOrderNumber, ...cleanData } };
     } catch(e) {
       console.error(e);
       throw e;
@@ -539,7 +559,12 @@ export const api = {
       const { db } = await import('./firebase');
       const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      const orders = snapshot.docs.map(doc => ({ _id: doc.id, id: doc.id, ...doc.data() }));
+      const orders = snapshot.docs.map(doc => {
+        const data = doc.data();
+        const rawId = data.orderNumber || data.orderId || doc.id;
+        const numId = formatNumericOrderId(rawId);
+        return { _id: doc.id, id: numId, orderNumber: numId, ...data };
+      });
       return { success: true, data: orders };
     } catch(e) {
       console.error(e);
@@ -549,12 +574,34 @@ export const api = {
 
   getOrder: async (id: string): Promise<any> => {
     try {
-      const { doc, getDoc } = await import('firebase/firestore');
+      const { doc, getDoc, collection, query, where, getDocs, limit } = await import('firebase/firestore');
       const { db } = await import('./firebase');
-      const docSnap = await getDoc(doc(db, 'orders', id));
-      if (docSnap.exists()) {
-        return { success: true, data: { _id: docSnap.id, id: docSnap.id, ...docSnap.data() } };
+
+      let docSnap: any = null;
+      try {
+        docSnap = await getDoc(doc(db, 'orders', id));
+      } catch {
+        docSnap = null;
       }
+
+      if (docSnap && docSnap.exists()) {
+        const data = docSnap.data();
+        const rawId = data.orderNumber || data.orderId || docSnap.id;
+        const numId = formatNumericOrderId(rawId);
+        return { success: true, data: { _id: docSnap.id, id: numId, orderNumber: numId, ...data } };
+      }
+
+      // If document not found by doc ID, search by orderNumber field
+      const q = query(collection(db, 'orders'), where('orderNumber', '==', id), limit(1));
+      const qSnap = await getDocs(q);
+      if (!qSnap.empty) {
+        const docItem = qSnap.docs[0];
+        const data = docItem.data();
+        const rawId = data.orderNumber || data.orderId || docItem.id;
+        const numId = formatNumericOrderId(rawId);
+        return { success: true, data: { _id: docItem.id, id: numId, orderNumber: numId, ...data } };
+      }
+
       return { success: false, data: null };
     } catch (e) {
       console.error(e);

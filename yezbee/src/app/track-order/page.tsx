@@ -22,7 +22,7 @@ const STAGES: OrderTimelineStage[] = [
 ];
 
 const MOCK_ORDER = {
-  orderNumber: 'YEZ12345',
+  orderNumber: '202612345',
   date: 'August 01, 2026',
   expectedDelivery: 'August 05, 2026',
   currentStageIndex: 3,
@@ -67,8 +67,8 @@ export default function TrackOrderPage() {
     setTimeout(() => {
       setLoading(false);
       setSearched(true);
-      const normalizedInput = orderId.trim().toUpperCase();
-      if (normalizedInput.includes('123') || normalizedInput.includes('YEZ') || normalizedInput.length >= 4) {
+      const normalizedInput = orderId.trim();
+      if (normalizedInput.includes('123') || normalizedInput.includes('2026') || normalizedInput.length >= 4) {
         setFoundOrder(MOCK_ORDER);
       } else {
         setFoundOrder(null);
@@ -109,7 +109,7 @@ export default function TrackOrderPage() {
                 <input
                   id="order-id-input"
                   type="text"
-                  placeholder="e.g. YEZ12345"
+                  placeholder="e.g. 202612345"
                   value={orderId}
                   onChange={(e) => setOrderId(e.target.value)}
                   className="w-full px-4 py-3 text-sm font-semibold rounded-xl border border-gray-200 outline-none focus:border-[var(--color-primary-gold)] bg-gray-50/50"
@@ -155,7 +155,7 @@ export default function TrackOrderPage() {
           </form>
 
           <p className="mt-3 text-[11px] text-gray-400 text-center">
-            Tip: Try entering Order ID <span className="font-bold text-[var(--color-primary-gold)]">YEZ12345</span> to preview tracking timeline.
+            Tip: Try entering Order ID <span className="font-bold text-[var(--color-primary-gold)]">202612345</span> to preview tracking timeline.
           </p>
         </div>
       </div>

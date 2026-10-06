@@ -2,6 +2,13 @@ export interface InvoiceItem {
   id: string | number
   name: string
   sku?: string
+  size?: string
+  color?: string
+  meta?: {
+    size?: string
+    color?: string
+    [key: string]: any
+  }
   price: number
   quantity: number
   image?: string
@@ -80,18 +87,23 @@ export function generateInvoiceHTML(order: InvoiceData): string {
     year: 'numeric'
   })
 
-  const itemRows = order.items.map((item, idx) => `
+  const itemRows = order.items.map((item, idx) => {
+    const itemSize = item.size || item.meta?.size || ''
+    const itemColor = item.color || item.meta?.color || ''
+    return `
     <tr>
       <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; color: #6B7280; font-size: 13px;">${idx + 1}</td>
-      <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; color: #111827; font-size: 13px; font-weight: 500;">
-        ${item.name}
+      <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; color: #111827; font-size: 13px;">
+        <span style="font-weight: 600; color: #111827;">${item.name}</span>
+        ${itemSize ? `<span style="display: inline-block; background: #FAF7F2; color: #8C6D23; border: 1px solid #E8DFC8; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 8px;">Size: ${itemSize}</span>` : ''}
+        ${itemColor ? `<span style="display: inline-block; background: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 500; padding: 1px 6px; border-radius: 4px; margin-left: 4px;">Color: ${itemColor}</span>` : ''}
         ${item.sku ? `<br><span style="color: #9CA3AF; font-size: 11px;">SKU: ${item.sku}</span>` : ''}
       </td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; text-align: right; color: #374151; font-size: 13px;">₹${item.price.toLocaleString('en-IN')}</td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; text-align: center; color: #374151; font-size: 13px;">${item.quantity}</td>
       <td style="padding: 10px 12px; border-bottom: 1px solid #E5E7EB; text-align: right; color: #111827; font-size: 13px; font-weight: 600;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</td>
     </tr>
-  `).join('')
+  `}).join('')
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -380,19 +392,21 @@ export function exportInvoiceAsExcel(order: InvoiceData) {
   csv += `Shipping Address,"${order.shippingAddress.line1}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.pincode}"\n`
   csv += `\n`
 
-  csv += `Item S.No,Item Name,SKU,Unit Price (INR),Quantity,Total Amount (INR)\n`
+  csv += `Item S.No,Item Name,Size,Color,SKU,Unit Price (INR),Quantity,Total Amount (INR)\n`
   order.items.forEach((item, idx) => {
     const itemName = item.name.replace(/"/g, '""')
+    const size = (item.size || item.meta?.size || '').replace(/"/g, '""')
+    const color = (item.color || item.meta?.color || '').replace(/"/g, '""')
     const sku = (item.sku || '').replace(/"/g, '""')
-    csv += `${idx + 1},"${itemName}","${sku}",${item.price},${item.quantity},${item.price * item.quantity}\n`
+    csv += `${idx + 1},"${itemName}","${size}","${color}","${sku}",${item.price},${item.quantity},${item.price * item.quantity}\n`
   })
 
   csv += `\n`
-  csv += `,,Subtotal,,${order.subtotal}\n`
-  csv += `,,Shipping,,${order.shipping}\n`
-  csv += `,,Tax,,${order.tax}\n`
-  csv += `,,Discount,,${order.discount}\n`
-  csv += `,,Grand Total,,${order.total}\n`
+  csv += `,,,,,Subtotal,,${order.subtotal}\n`
+  csv += `,,,,,Shipping,,${order.shipping}\n`
+  csv += `,,,,,Tax,,${order.tax}\n`
+  csv += `,,,,,Discount,,${order.discount}\n`
+  csv += `,,,,,Grand Total,,${order.total}\n`
 
   downloadBlob(csv, `Invoice_${order.id}.csv`, 'text/csv;charset=utf-8;')
 }
@@ -467,8 +481,10 @@ export function exportInvoiceAsTXT(order: InvoiceData) {
   txt += `${subBorder}\n`
 
   order.items.forEach((item, idx) => {
+    const itemSize = item.size || item.meta?.size || ''
+    const sizeTag = itemSize ? ` (${itemSize})` : ''
     const num = (idx + 1).toString().padEnd(3, ' ')
-    const name = item.name.slice(0, 32).padEnd(33, ' ')
+    const name = `${item.name}${sizeTag}`.slice(0, 32).padEnd(33, ' ')
     const qty = item.quantity.toString().padEnd(4, ' ')
     const price = `₹${item.price}`.padEnd(12, ' ')
     const total = `₹${item.price * item.quantity}`

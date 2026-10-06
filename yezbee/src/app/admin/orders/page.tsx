@@ -19,9 +19,12 @@ interface Order {
   customer: string
   email: string
   items: number
+  rawItems?: any[]
+  shippingAddressObj?: any
   total: number
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned'
   payment: 'paid' | 'unpaid' | 'refunded' | 'partial'
+  paymentMethod?: string
   phone: string
 }
 
@@ -55,17 +58,20 @@ export default function OrdersPage() {
       try {
         const res = await api.getOrders();
         if (res.success && mounted) {
-          const formatted = res.data.map((o: any) => ({
+          const formatted: Order[] = res.data.map((o: any) => ({
             id: o.id || o._id,
             _id: o._id,
             date: o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : 'Unknown',
-            customer: o.shippingAddress ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName}` : 'Guest',
+            customer: o.shippingAddress ? `${o.shippingAddress.firstName} ${o.shippingAddress.lastName || ''}`.trim() : 'Guest',
             email: o.shippingAddress?.email || 'N/A',
             phone: o.shippingAddress?.phone || 'N/A',
             items: Array.isArray(o.items) ? o.items.length : 0,
+            rawItems: o.items || [],
+            shippingAddressObj: o.shippingAddress || null,
             total: o.totalAmount || 0,
             status: o.status || 'pending',
             payment: o.payment || 'unpaid',
+            paymentMethod: o.paymentMethod || 'Online Payment',
           }));
           setAllOrders(formatted);
         }
@@ -166,12 +172,13 @@ export default function OrdersPage() {
       header: 'Invoice',
       sortable: false,
       render: (row: Order) => {
+        const addr = row.shippingAddressObj || {}
         const invoiceData: InvoiceData = {
           id: row.id,
           date: row.date,
           status: row.status,
           payment: row.payment,
-          paymentMethod: 'Online Payment',
+          paymentMethod: row.paymentMethod || 'Online Payment',
           subtotal: row.total,
           shipping: 0,
           discount: 0,
@@ -183,20 +190,32 @@ export default function OrdersPage() {
             phone: row.phone,
           },
           shippingAddress: {
-            line1: 'Customer Address',
-            city: 'Hyderabad',
-            state: 'Telangana',
-            pincode: '500034',
+            line1: addr.address1 || 'Customer Address',
+            line2: addr.address2 || '',
+            city: addr.city || 'Hyderabad',
+            state: addr.state || 'Telangana',
+            pincode: addr.pincode || '500034',
             country: 'India',
           },
-          items: [
-            {
-              id: 1,
-              name: `Order Items (${row.items})`,
-              price: row.total,
-              quantity: 1,
-            },
-          ],
+          items: Array.isArray(row.rawItems) && row.rawItems.length > 0
+            ? row.rawItems.map((it: any, idx: number) => ({
+                id: idx + 1,
+                name: it.name || 'Product',
+                sku: it.sku || it.product || `SKU-${idx}`,
+                size: it.size || it.meta?.size || '',
+                color: it.color || it.meta?.color || '',
+                meta: it.meta || { size: it.size || '', color: it.color || '' },
+                price: it.price || 0,
+                quantity: it.quantity || 1,
+              }))
+            : [
+                {
+                  id: 1,
+                  name: `Order Items (${row.items})`,
+                  price: row.total,
+                  quantity: 1,
+                },
+              ],
         }
         return (
           <div onClick={(e) => e.stopPropagation()}>

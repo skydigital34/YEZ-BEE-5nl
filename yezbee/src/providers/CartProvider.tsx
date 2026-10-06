@@ -12,6 +12,7 @@ export interface LocalCartItem {
   color?: string;
   size?: string;
   quantity: number;
+  [key: string]: any;
 }
 
 interface CartContextValue {
@@ -22,11 +23,11 @@ interface CartContextValue {
   discountCode: string | null;
   discountAmount: number;
   notes: string;
-  addToCart: (item: LocalCartItem) => void;
+  addToCart: (item: LocalCartItem | any) => void;
   addItem: (item: any) => void;
-  removeFromCart: (id: string | number) => void;
-  removeItem: (productId: string, variantId: string) => void;
-  updateQuantity: (id: string | number, quantity: number) => void;
+  removeFromCart: (id: string | number, size?: string, color?: string) => void;
+  removeItem: (productId: string, variantId?: string) => void;
+  updateQuantity: (id: string | number, quantity: number, size?: string, color?: string) => void;
   clearCart: () => void;
 }
 
@@ -71,43 +72,76 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [localCart]);
 
   const addToCart = useCallback(
-    (item: LocalCartItem) => {
+    (item: any) => {
+      const normalizedItem: LocalCartItem = {
+        id: item.id || item.productId,
+        name: item.name || '',
+        price: Number(item.price) || 0,
+        image: item.image || item.thumbnail || '',
+        color: item.color || item.variant?.color || '',
+        size: item.size || item.variant?.size || '',
+        quantity: Number(item.quantity) || 1,
+      };
+
       setLocalCart((prev) => {
         const current = Array.isArray(prev) ? prev : [];
         const existingIndex = current.findIndex(
-          (i) => String(i.id) === String(item.id) && i.color === item.color && i.size === item.size
+          (i) =>
+            String(i.id) === String(normalizedItem.id) &&
+            (i.color || '') === (normalizedItem.color || '') &&
+            (i.size || '') === (normalizedItem.size || '')
         );
         if (existingIndex > -1) {
           const updated = [...current];
-          updated[existingIndex].quantity += item.quantity || 1;
+          updated[existingIndex].quantity += normalizedItem.quantity || 1;
           return updated;
         }
-        return [...current, item];
+        return [...current, normalizedItem];
       });
 
       addNotification({
         type: 'success',
         title: 'Added to Bag',
-        message: `${item.name} has been added to your bag.`,
+        message: `${normalizedItem.name}${normalizedItem.size ? ` (${normalizedItem.size})` : ''} has been added to your bag.`,
         link: '/cart',
       });
     },
     [addNotification]
   );
 
-  const removeFromCart = useCallback((id: string | number) => {
-    setLocalCart((prev) => (Array.isArray(prev) ? prev.filter((i) => String(i.id) !== String(id)) : []));
+  const removeFromCart = useCallback((id: string | number, size?: string, color?: string) => {
+    setLocalCart((prev) => {
+      if (!Array.isArray(prev)) return [];
+      return prev.filter((i) => {
+        if (String(i.id) !== String(id)) return true;
+        if (size !== undefined && (i.size || '') !== (size || '')) return true;
+        if (color !== undefined && (i.color || '') !== (color || '')) return true;
+        return false;
+      });
+    });
   }, []);
 
-  const updateLocalQuantity = useCallback((id: string | number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id);
-      return;
-    }
-    setLocalCart((prev) =>
-      Array.isArray(prev) ? prev.map((i) => (String(i.id) === String(id) ? { ...i, quantity } : i)) : []
-    );
-  }, [removeFromCart]);
+  const updateLocalQuantity = useCallback(
+    (id: string | number, quantity: number, size?: string, color?: string) => {
+      if (quantity <= 0) {
+        removeFromCart(id, size, color);
+        return;
+      }
+      setLocalCart((prev) => {
+        if (!Array.isArray(prev)) return [];
+        return prev.map((i) => {
+          const matchesId = String(i.id) === String(id);
+          const matchesSize = size === undefined || (i.size || '') === (size || '');
+          const matchesColor = color === undefined || (i.color || '') === (color || '');
+          if (matchesId && matchesSize && matchesColor) {
+            return { ...i, quantity };
+          }
+          return i;
+        });
+      });
+    },
+    [removeFromCart]
+  );
 
   const safeCart = Array.isArray(localCart) ? localCart : [];
   const totalAmount = safeCart.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
@@ -123,7 +157,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addToCart,
     addItem: addToCart,
     removeFromCart,
-    removeItem: (productId) => removeFromCart(productId),
+    removeItem: (productId, variantId) => removeFromCart(productId, variantId),
     updateQuantity: updateLocalQuantity,
     clearCart: () => setLocalCart([]),
   };

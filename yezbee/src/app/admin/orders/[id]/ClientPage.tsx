@@ -14,7 +14,7 @@ import InvoiceDownloadModal from '@/components/admin/InvoiceDownloadModal'
 import { InvoiceData } from '@/lib/invoiceExporter'
 
 const orderData = {
-  id: 'ORD-2026-0042',
+  id: '20260042',
   date: '2026-07-30T14:23:00',
   status: 'confirmed' as const,
   payment: 'paid' as const,
@@ -49,9 +49,9 @@ const orderData = {
     country: 'India',
   },
   items: [
-    { id: 1, name: 'Silk Evening Gown - Gold', sku: 'YEB-SEG-001-GD-M', price: 42500, quantity: 1, image: '/images/maternity/slide3.jpg' },
-    { id: 2, name: 'Statement Necklace - Pearl', sku: 'YEB-SN-010-PL', price: 12500, quantity: 1, image: '/images/haute_accessories.jpg' },
-    { id: 3, name: 'Embellished Heels - Nude', sku: 'YEB-EH-012-ND-7', price: 18500, quantity: 1, image: '/images/western_chic.jpg' },
+    { id: 1, name: 'Silk Evening Gown - Gold', sku: 'YEB-SEG-001-GD-M', size: 'M', color: 'Gold', price: 42500, quantity: 1, image: '/images/maternity/slide3.jpg' },
+    { id: 2, name: 'Statement Necklace - Pearl', sku: 'YEB-SN-010-PL', size: 'Free Size', color: 'Pearl White', price: 12500, quantity: 1, image: '/images/haute_accessories.jpg' },
+    { id: 3, name: 'Embellished Heels - Nude', sku: 'YEB-EH-012-ND-7', size: 'UK 7', color: 'Nude', price: 18500, quantity: 1, image: '/images/western_chic.jpg' },
   ],
   timeline: [
     { action: 'Order Placed', timestamp: '2026-07-30T14:23:00', user: 'Priya Sharma', note: '' },
@@ -139,7 +139,10 @@ export default function OrderDetailPage() {
       ? realOrder.items.map((it: any, idx: number) => ({
           id: idx + 1,
           name: it.name || 'Product',
-          sku: it.product || `SKU-${idx}`,
+          sku: it.sku || it.product || `SKU-${idx}`,
+          size: it.size || it.meta?.size || '',
+          color: it.color || it.meta?.color || '',
+          meta: it.meta || { size: it.size || '', color: it.color || '' },
           price: it.price || 0,
           quantity: it.quantity || 1,
           image: it.image || '',
@@ -232,8 +235,20 @@ export default function OrderDetailPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                    <p className="text-xs text-gray-400">SKU: {item.sku}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+                      {item.size && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#FAF7F2] text-[#8C6D23] border border-[#E8DFC8]">
+                          Size: {item.size}
+                        </span>
+                      )}
+                      {item.color && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                          Color: {item.color}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">SKU: {item.sku}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">₹{item.price.toLocaleString()}</p>

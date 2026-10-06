@@ -304,7 +304,7 @@ export const SAMPLE_REVIEWS = [
 
 export const SAMPLE_ORDERS = [
   {
-    id: 'ORD-2026-001',
+    id: '20260001',
     userId: 'user-1',
     items: [
       { productId: 'prod-1', name: 'Ivory Silk Kanjeevaram Saree', variant: { color: 'Ivory', size: 'Free Size' }, quantity: 1, price: 999 },
@@ -323,7 +323,7 @@ export const SAMPLE_ORDERS = [
     estimatedDelivery: '2026-03-16',
   },
   {
-    id: 'ORD-2026-002',
+    id: '20260002',
     userId: 'user-1',
     items: [
       { productId: 'prod-2', name: 'Ruby Red Velvet Lehenga', variant: { color: 'Ruby Red', size: 'M' }, quantity: 1, price: 999 },
@@ -341,7 +341,7 @@ export const SAMPLE_ORDERS = [
     estimatedDelivery: '2026-04-08',
   },
   {
-    id: 'ORD-2026-003',
+    id: '20260003',
     userId: 'user-1',
     items: [
       { productId: 'prod-5', name: 'Pastel Pink Organza Saree', variant: { color: 'Pastel Pink', size: 'Free Size' }, quantity: 2, price: 999 },
@@ -359,7 +359,7 @@ export const SAMPLE_ORDERS = [
     estimatedDelivery: '2026-04-18',
   },
   {
-    id: 'ORD-2026-004',
+    id: '20260004',
     userId: 'user-1',
     items: [
       { productId: 'prod-8', name: 'White Lace Detailed Kurti', variant: { color: 'White', size: 'L' }, quantity: 1, price: 999 },
@@ -378,7 +378,7 @@ export const SAMPLE_ORDERS = [
     estimatedDelivery: '2026-04-25',
   },
   {
-    id: 'ORD-2026-005',
+    id: '20260005',
     userId: 'user-1',
     items: [
       { productId: 'prod-10', name: 'Bridal Red Banarasi Saree', variant: { color: 'Bridal Red', size: 'Free Size' }, quantity: 1, price: 999 },

@@ -15,6 +15,8 @@ export interface CartItem {
   originalPrice?: number;
   quantity: number;
   maxQuantity: number;
+  size?: string;
+  color?: string;
 }
 
 interface SavedItem {
@@ -31,6 +33,8 @@ interface SavedItem {
   originalPrice?: number;
   quantity: number;
   maxQuantity: number;
+  size?: string;
+  color?: string;
 }
 
 interface CartState {

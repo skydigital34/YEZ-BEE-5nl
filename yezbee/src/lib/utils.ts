@@ -485,3 +485,19 @@ export function matchesCategory(p: any, categorySlug: string, subcategoryType?: 
 
   return true;
 }
+
+export function formatNumericOrderId(id: string | number | undefined | null): string {
+  if (!id) return `${Date.now()}`;
+  const str = String(id).trim();
+  const digitsOnly = str.replace(/\D/g, '');
+  if (digitsOnly.length >= 4) {
+    return digitsOnly;
+  }
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) % 1000000;
+  }
+  const numericSuffix = String(Math.abs(hash)).padStart(6, '0');
+  return `2026${digitsOnly}${numericSuffix}`.slice(0, 10);
+}
+

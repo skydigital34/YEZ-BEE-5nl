@@ -189,7 +189,7 @@ export default function ContactPage() {
                       <input
                         id="contact-order"
                         type="text"
-                        placeholder="e.g. YEZ12345"
+                        placeholder="e.g. 202612345"
                         value={formData.orderNumber}
                         onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
                         className="w-full px-4 py-3 text-sm rounded-xl border border-gray-200 bg-gray-50/50 outline-none focus:border-[var(--color-primary-gold)]"
