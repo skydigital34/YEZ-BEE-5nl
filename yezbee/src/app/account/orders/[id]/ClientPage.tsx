@@ -125,16 +125,23 @@ export default function OrderDetailPage() {
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <span className="px-3 py-1.5 text-xs rounded-full font-medium text-blue-600 bg-blue-50 capitalize">{orderStatus}</span>
-            <InvoiceDownloadDropdown order={invoiceOrderData} buttonText="Download Invoice" buttonStyle="primary" />
+            <Link
+              href={`/track-order?orderId=${orderId}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-dark text-white text-xs font-semibold rounded-xl hover:bg-gold hover:text-dark transition-all shadow-sm"
+            >
+              <Truck size={14} />
+              <span>Track Live Delivery</span>
+            </Link>
+            <InvoiceDownloadDropdown order={invoiceOrderData} buttonText="Download Invoice" buttonStyle="outline" />
             <button
               onClick={handleCancelOrder}
-              className="px-4 py-2 border border-red-400 text-red-500 text-xs rounded-lg hover:bg-red-50 transition-colors"
+              className="px-4 py-2 border border-red-400 text-red-500 text-xs rounded-xl hover:bg-red-50 transition-colors"
             >
               Cancel Order
             </button>
             <button
               onClick={handleReturnRequest}
-              className="px-4 py-2 bg-gold text-dark text-xs rounded-lg hover:bg-gold/90 transition-colors"
+              className="px-4 py-2 bg-gold/20 text-dark text-xs font-semibold rounded-xl hover:bg-gold/30 transition-colors"
             >
               Return Request
             </button>

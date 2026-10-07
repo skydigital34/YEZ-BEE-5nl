@@ -577,9 +577,12 @@ export const api = {
       const { doc, getDoc, collection, query, where, getDocs, limit } = await import('firebase/firestore');
       const { db } = await import('./firebase');
 
+      const cleanId = String(id || '').replace(/^#/, '').trim();
+      if (!cleanId) return { success: false, data: null };
+
       let docSnap: any = null;
       try {
-        docSnap = await getDoc(doc(db, 'orders', id));
+        docSnap = await getDoc(doc(db, 'orders', cleanId));
       } catch {
         docSnap = null;
       }
@@ -591,9 +594,14 @@ export const api = {
         return { success: true, data: { _id: docSnap.id, id: numId, orderNumber: numId, ...data } };
       }
 
-      // If document not found by doc ID, search by orderNumber field
-      const q = query(collection(db, 'orders'), where('orderNumber', '==', id), limit(1));
-      const qSnap = await getDocs(q);
+      // If document not found by doc ID, search by orderNumber field (string or number)
+      const q = query(collection(db, 'orders'), where('orderNumber', '==', cleanId), limit(1));
+      let qSnap = await getDocs(q);
+      if (qSnap.empty && !isNaN(Number(cleanId))) {
+        const numQ = query(collection(db, 'orders'), where('orderNumber', '==', Number(cleanId)), limit(1));
+        qSnap = await getDocs(numQ);
+      }
+
       if (!qSnap.empty) {
         const docItem = qSnap.docs[0];
         const data = docItem.data();
