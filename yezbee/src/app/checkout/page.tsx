@@ -13,6 +13,7 @@ import {
   Check,
   Banknote,
   Sparkles,
+  Tag,
 } from 'lucide-react';
 import { useCart } from '@/providers/CartProvider';
 import { useAuth } from '@/providers/AuthProvider';
@@ -36,15 +37,30 @@ const SHIPPING_OPTIONS = [
 ];
 
 export default function CheckoutPage() {
-  const { items, totalAmount, clearCart } = useCart();
+  const {
+    items,
+    totalAmount,
+    discountCode,
+    discountAmount,
+    applyCoupon,
+    removeCoupon,
+    clearCart,
+  } = useCart();
   const safeItems = Array.isArray(items) ? items : [];
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const router = useRouter();
 
+  const [couponInput, setCouponInput] = useState(discountCode || '');
   const [currentStep, setCurrentStep] = useState<Step>('shipping');
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('standard');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('razorpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (discountCode) {
+      setCouponInput(discountCode);
+    }
+  }, [discountCode]);
 
   const [form, setForm] = useState({
     email: user?.email || '',
@@ -87,7 +103,8 @@ export default function CheckoutPage() {
 
   const subtotal = totalAmount || (safeItems.reduce((sum, i) => sum + (Number(i?.price) || 0) * (Number(i?.quantity) || 1), 0));
   const shippingCost = SHIPPING_OPTIONS.find((o) => o.value === shippingMethod)?.cost || 0;
-  const finalTotal = Math.max(0, subtotal + shippingCost);
+  const discount = discountAmount || (discountCode && subtotal > 0 ? Math.min(subtotal, 100) : 0);
+  const finalTotal = Math.max(0, subtotal - discount + shippingCost);
 
   const handlePlaceOrder = async () => {
     if (!form.email || !form.phone || !form.firstName || !form.address1 || !form.pincode) {
@@ -124,6 +141,10 @@ export default function CheckoutPage() {
           }),
           shippingAddress: form,
           paymentMethod: 'COD',
+          subtotal: subtotal,
+          discountAmount: discount,
+          couponCode: discountCode || null,
+          shippingCost: shippingCost,
           totalAmount: finalTotal,
           status: 'pending',
           payment: 'unpaid',
@@ -209,6 +230,10 @@ export default function CheckoutPage() {
               paymentMethod: 'RAZORPAY',
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
+              subtotal: subtotal,
+              discountAmount: discount,
+              couponCode: discountCode || null,
+              shippingCost: shippingCost,
               totalAmount: finalTotal,
               status: 'confirmed',
               payment: 'paid',
@@ -537,11 +562,70 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              <div className="pt-4 border-t border-[var(--color-champagne)] space-y-2 text-xs font-semibold text-gray-600">
+              {/* Promo Code Input / Applied Badge */}
+              <div className="pt-3 border-t border-[var(--color-champagne)]">
+                {discountCode ? (
+                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-[var(--color-emerald)] font-bold">
+                      <Check size={14} />
+                      <span>Code <strong>{discountCode}</strong> (-₹{discount})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeCoupon();
+                        setCouponInput('');
+                        toast.success('Promo code removed.');
+                      }}
+                      className="text-[11px] text-gray-500 hover:text-red-600 font-semibold underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const res = applyCoupon(couponInput);
+                      if (res.success) {
+                        toast.success(res.message);
+                      } else {
+                        toast.error(res.message);
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="relative flex-1">
+                      <Tag size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="Promo Code (e.g. YEZ10)"
+                        className="w-full pl-7 pr-2.5 py-1.5 text-xs border border-gray-200 rounded-xl outline-none uppercase font-semibold focus:border-[var(--color-primary-gold)]"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-xl hover:bg-[var(--color-primary-gold)] hover:text-[var(--color-dark)] transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              <div className="pt-3 border-t border-[var(--color-champagne)] space-y-2 text-xs font-semibold text-gray-600">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="text-black">₹{subtotal.toLocaleString()}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-[var(--color-emerald)] font-bold">
+                    <span className="flex items-center gap-1"><Check size={12} /> Promo Discount ({discountCode})</span>
+                    <span>-₹{discount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Shipping</span>
                   <span>{shippingCost === 0 ? <strong className="text-[var(--color-emerald)]">FREE</strong> : `₹${shippingCost}`}</span>

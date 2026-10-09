@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,27 +21,51 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/providers/CartProvider';
 import { getSafeImageUrl } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 export default function CartPage() {
-  const { items, updateQuantity, removeFromCart, totalAmount, clearCart } = useCart();
+  const {
+    items,
+    updateQuantity,
+    removeFromCart,
+    totalAmount,
+    discountCode,
+    discountAmount,
+    applyCoupon,
+    removeCoupon,
+  } = useCart();
   const safeItems = Array.isArray(items) ? items : [];
-  const [coupon, setCoupon] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponInput, setCouponInput] = useState(discountCode || '');
   const [giftWrap, setGiftWrap] = useState(false);
 
+  useEffect(() => {
+    if (discountCode) {
+      setCouponInput(discountCode);
+    }
+  }, [discountCode]);
+
   const subtotal = totalAmount;
-  const discount = couponApplied ? subtotal * 0.15 : 0;
+  const discount = discountAmount;
   const freeShippingThreshold = 0;
   const shipping = 0;
   const giftWrapFee = giftWrap ? 199 : 0;
   const finalTotal = Math.max(0, subtotal - discount + shipping + giftWrapFee);
   const freeShippingProgress = 100;
 
-  const applyCoupon = (e: React.FormEvent) => {
+  const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
-    if (coupon.toUpperCase() === 'LUXURY15' || coupon.toUpperCase() === 'YEZ15') {
-      setCouponApplied(true);
+    const res = applyCoupon(couponInput);
+    if (res.success) {
+      toast.success(res.message);
+    } else {
+      toast.error(res.message);
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponInput('');
+    toast.success('Promo code removed.');
   };
 
   return (
@@ -182,22 +206,44 @@ export default function CartPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <form onSubmit={applyCoupon} className="flex items-center gap-2 p-3 bg-white rounded-2xl border border-[var(--color-champagne)]">
-                  <Tag size={16} className="text-[var(--color-primary-gold)] ml-2" />
-                  <input
-                    type="text"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    placeholder="Promo Code (e.g. LUXURY15)"
-                    className="flex-1 text-xs outline-none uppercase font-semibold text-[var(--color-dark)]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-xl hover:bg-[var(--color-primary-gold)] hover:text-[var(--color-dark)] transition-colors"
-                  >
-                    {couponApplied ? 'Applied' : 'Apply'}
-                  </button>
-                </form>
+                <div className="flex flex-col gap-1.5">
+                  <form onSubmit={handleApplyCoupon} className="flex items-center gap-2 p-3 bg-white rounded-2xl border border-[var(--color-champagne)]">
+                    <Tag size={16} className="text-[var(--color-primary-gold)] ml-2" />
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="Promo Code (e.g. YEZ10)"
+                      className="flex-1 text-xs outline-none uppercase font-semibold text-[var(--color-dark)]"
+                    />
+                    {discountCode ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-[var(--color-emerald)] bg-emerald-50 px-2 py-1 rounded-lg">
+                          Applied
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="px-2.5 py-1 bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-600 text-[11px] font-bold rounded-lg transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-[var(--color-dark)] text-white text-xs font-bold uppercase rounded-xl hover:bg-[var(--color-primary-gold)] hover:text-[var(--color-dark)] transition-colors"
+                      >
+                        Apply
+                      </button>
+                    )}
+                  </form>
+                  {discountCode && (
+                    <p className="text-[11px] text-[var(--color-emerald)] font-semibold flex items-center gap-1 pl-2">
+                      <Check size={12} /> Promo code {discountCode} applied: ₹100 discount activated!
+                    </p>
+                  )}
+                </div>
 
                 <label className="flex items-center gap-3 p-3.5 bg-white rounded-2xl border border-[var(--color-champagne)] cursor-pointer select-none">
                   <input
@@ -226,9 +272,9 @@ export default function CartPage() {
                     <span className="font-bold text-[var(--color-dark)]">₹{subtotal.toLocaleString()}</span>
                   </div>
 
-                  {couponApplied && (
+                  {discount > 0 && (
                     <div className="flex justify-between text-[var(--color-emerald)] font-bold">
-                      <span className="flex items-center gap-1"><Check size={12} /> Voucher LUXURY15 (-15%)</span>
+                      <span className="flex items-center gap-1"><Check size={12} /> Voucher {discountCode} (-₹{discount})</span>
                       <span>-₹{discount.toLocaleString()}</span>
                     </div>
                   )}

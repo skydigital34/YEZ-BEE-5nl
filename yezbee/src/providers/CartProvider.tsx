@@ -29,6 +29,8 @@ interface CartContextValue {
   removeItem: (productId: string, variantId?: string) => void;
   updateQuantity: (id: string | number, quantity: number, size?: string, color?: string) => void;
   clearCart: () => void;
+  applyCoupon: (code: string) => { success: boolean; message: string; discount: number };
+  removeCoupon: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -37,6 +39,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const store = useCartStore();
   const addNotification = useNotificationStore((s) => s.addNotification);
   const [localCart, setLocalCart] = useState<LocalCartItem[]>([]);
+  const [discountCode, setDiscountCode] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -56,6 +59,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         } else {
           setLocalCart([]);
         }
+      }
+      const savedCoupon = localStorage.getItem('yezbee_coupon');
+      if (savedCoupon) {
+        setDiscountCode(savedCoupon);
       }
     } catch {
       setLocalCart([]);
@@ -144,22 +151,62 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const safeCart = Array.isArray(localCart) ? localCart : [];
-  const totalAmount = safeCart.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
+  const rawSubtotal = safeCart.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
+  const discountAmount = discountCode && rawSubtotal > 0 ? Math.min(rawSubtotal, 100) : 0;
+
+  const applyCoupon = useCallback(
+    (code: string) => {
+      const cleanCode = (code || '').trim().toUpperCase();
+      if (!cleanCode) {
+        return { success: false, message: 'Please enter a valid promo code.', discount: 0 };
+      }
+      setDiscountCode(cleanCode);
+      try {
+        localStorage.setItem('yezbee_coupon', cleanCode);
+      } catch {}
+      store.applyDiscount(cleanCode, 100);
+      return {
+        success: true,
+        message: `Promo code "${cleanCode}" applied! ₹100 discount added 🎉`,
+        discount: 100,
+      };
+    },
+    [store]
+  );
+
+  const removeCoupon = useCallback(() => {
+    setDiscountCode(null);
+    try {
+      localStorage.removeItem('yezbee_coupon');
+    } catch {}
+    store.removeDiscount();
+  }, [store]);
+
+  const clearCart = useCallback(() => {
+    setLocalCart([]);
+    setDiscountCode(null);
+    try {
+      localStorage.removeItem('yezbee_coupon');
+    } catch {}
+    store.clearCart();
+  }, [store]);
 
   const value: CartContextValue = {
     items: safeCart,
     itemCount: safeCart.reduce((sum, i) => sum + (Number(i?.quantity) || 1), 0),
-    totalAmount,
-    subtotal: totalAmount,
-    discountCode: store.discountCode,
-    discountAmount: store.discountAmount,
+    totalAmount: rawSubtotal,
+    subtotal: rawSubtotal,
+    discountCode,
+    discountAmount,
     notes: store.notes,
     addToCart,
     addItem: addToCart,
     removeFromCart,
     removeItem: (productId, variantId) => removeFromCart(productId, variantId),
     updateQuantity: updateLocalQuantity,
-    clearCart: () => setLocalCart([]),
+    clearCart,
+    applyCoupon,
+    removeCoupon,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
