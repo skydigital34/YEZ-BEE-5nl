@@ -8,7 +8,8 @@ import {
   LayoutDashboard, Package, ShoppingBag, Users, FolderTree,
   Search, Settings,
   Menu, X, Bell, LogOut, User,
-  ChevronDown, PanelRightClose, PanelRightOpen
+  ChevronDown, PanelRightClose, PanelRightOpen,
+  Tag, BarChart3, Star
 } from 'lucide-react'
 
 import { getAdminSession, clearAdminSession, AdminUser } from '@/lib/adminAuth'
@@ -39,6 +40,10 @@ const navItems = [
   { icon: ShoppingBag, label: 'Orders', href: '/admin/orders' },
   { icon: Users, label: 'Customers', href: '/admin/customers' },
   { icon: FolderTree, label: 'Categories', href: '/admin/categories' },
+  { icon: Tag, label: 'Coupons', href: '/admin/coupons' },
+  { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
+  { icon: Star, label: 'Reviews', href: '/admin/reviews' },
+  { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ]
 
 const SubNav = ({ item, collapsed }: { item: typeof navItems[number], collapsed: boolean }) => {
@@ -161,9 +166,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname])
 
   const handleLogout = () => {
+    setProfileOpen(false)
     clearAdminSession()
     setAdminUser(null)
-    router.push('/admin/login')
+    window.location.href = '/admin/login'
   }
 
   const auth: AuthContextType = {
@@ -395,16 +401,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           </span>
                         </div>
                         <div className="py-1">
-                          <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-[#FAF7F2] flex items-center gap-2 transition-colors">
+                          <Link
+                            href="/admin/profile"
+                            onClick={() => setProfileOpen(false)}
+                            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-[#FAF7F2] flex items-center gap-2 transition-colors"
+                          >
                             <User size={15} /> Profile
-                          </button>
-                          <button className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-[#FAF7F2] flex items-center gap-2 transition-colors">
+                          </Link>
+                          <Link
+                            href="/admin/settings"
+                            onClick={() => setProfileOpen(false)}
+                            className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-[#FAF7F2] flex items-center gap-2 transition-colors"
+                          >
                             <Settings size={15} /> Settings
-                          </button>
+                          </Link>
                         </div>
                         <div className="border-t border-gray-100 py-1">
                           <button
-                            onClick={auth.logout}
+                            onClick={handleLogout}
                             className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                           >
                             <LogOut size={15} /> Sign Out

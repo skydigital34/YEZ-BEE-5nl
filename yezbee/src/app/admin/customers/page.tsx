@@ -19,17 +19,9 @@ interface Customer {
   joinedDate: string
   status: 'active' | 'inactive' | 'blocked'
   avatar: string
+  orders?: any[]
+  address?: any
 }
-
-const customerOrders = [
-  { id: '20260042', date: '2026-07-30', total: 50150, status: 'confirmed' },
-  { id: '20260036', date: '2026-07-20', total: 28900, status: 'delivered' },
-]
-
-const customerWishlist = [
-  { name: 'Velvet Blazer', price: 28900 },
-  { name: 'Designer Lehenga', price: 85000 },
-]
 
 const statusColors: Record<string, string> = {
   active: 'bg-green-100 text-green-700 border-green-200',
@@ -57,6 +49,8 @@ export default function CustomersPage() {
             joinedDate: c.lastOrder ? new Date(c.lastOrder).toISOString().split('T')[0] : 'Unknown',
             status: 'active' as const,
             avatar: '',
+            orders: c.orders || [],
+            address: c.address || null,
           }));
           setAllCustomers(formatted);
         }
@@ -278,76 +272,70 @@ export default function CustomersPage() {
 
                 {detailTab === 'orders' && (
                   <div className="space-y-3">
-                    {customerOrders.map((order) => (
-                      <div key={order.id} className="flex items-center justify-between p-4 bg-[#FAF7F2] rounded-xl hover:bg-[#F5E6C8]/20 transition-colors cursor-pointer border border-gray-50">
-                        <div>
-                          <p className="text-sm font-medium text-[#C9A84C]">{order.id}</p>
-                          <p className="text-xs text-gray-400">{new Date(order.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                    {Array.isArray(selectedCustomer.orders) && selectedCustomer.orders.length > 0 ? (
+                      selectedCustomer.orders.map((order: any) => (
+                        <div key={order.id} className="flex items-center justify-between p-4 bg-[#FAF7F2] rounded-xl hover:bg-[#F5E6C8]/20 transition-colors cursor-pointer border border-gray-50">
+                          <div>
+                            <p className="text-sm font-medium text-[#C9A84C]">{order.id}</p>
+                            <p className="text-xs text-gray-400">{order.date}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">₹{Number(order.total || 0).toLocaleString()}</p>
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-green-100 text-green-700 border-green-200 capitalize">
+                              {order.status || 'pending'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-semibold text-gray-900">₹{order.total.toLocaleString()}</p>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-green-100 text-green-700 border-green-200 capitalize">
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-400 text-center py-8">No orders found for this customer</p>
+                    )}
                   </div>
                 )}
 
                 {detailTab === 'wishlist' && (
                   <div className="space-y-3">
-                    {customerWishlist.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-[#FAF7F2] rounded-xl border border-gray-50">
-                        <div className="flex items-center gap-3">
-                          <Heart size={16} className="text-red-400" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                            <p className="text-xs text-gray-400">₹{item.price.toLocaleString()}</p>
-                          </div>
-                        </div>
-                        <button className="text-xs text-[#C9A84C] font-medium hover:underline">Add to Cart</button>
-                      </div>
-                    ))}
-                    {customerWishlist.length === 0 && (
-                      <p className="text-sm text-gray-400 text-center py-8">No items in wishlist</p>
-                    )}
+                    <p className="text-sm text-gray-400 text-center py-8">No items in wishlist</p>
                   </div>
                 )}
 
                 {detailTab === 'addresses' && (
                   <div className="space-y-4">
-                    <div className="p-4 bg-[#FAF7F2] rounded-xl border border-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-gray-900">Home</p>
-                        <span className="text-[10px] font-medium bg-[#C9A84C]/10 text-[#C9A84C] px-2 py-0.5 rounded-full border border-[#C9A84C]/20">Default</span>
+                    {selectedCustomer.address ? (
+                      <div className="p-4 bg-[#FAF7F2] rounded-xl border border-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-medium text-gray-900">Delivery Address</p>
+                          <span className="text-[10px] font-medium bg-[#C9A84C]/10 text-[#C9A84C] px-2 py-0.5 rounded-full border border-[#C9A84C]/20">Primary</span>
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {[
+                            selectedCustomer.address.address1,
+                            selectedCustomer.address.address2,
+                            selectedCustomer.address.city,
+                            selectedCustomer.address.state,
+                            selectedCustomer.address.pincode
+                          ].filter(Boolean).join(', ') || 'Address on file'}
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-600">42, Rosewood Apartments, Banjara Hills, Hyderabad - 500034</p>
-                    </div>
-                    <div className="p-4 bg-[#FAF7F2] rounded-xl border border-gray-50">
-                      <p className="text-sm font-medium text-gray-900 mb-2">Office</p>
-                      <p className="text-sm text-gray-600">15, Tech Park, Hitech City, Hyderabad - 500081</p>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 text-center py-8">No saved addresses</p>
+                    )}
                   </div>
                 )}
 
                 {detailTab === 'activity' && (
                   <div className="space-y-3">
-                    {[
-                      { action: 'Placed order 20260042', time: '2 hours ago' },
-                      { action: 'Viewed product "Silk Evening Gown"', time: '1 day ago' },
-                      { action: 'Added "Velvet Blazer" to wishlist', time: '3 days ago' },
-                      { action: 'Left a review on "Handcrafted Saree"', time: '5 days ago' },
-                      { action: 'Updated profile picture', time: '1 week ago' },
-                    ].map((event, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 bg-[#FAF7F2] rounded-xl border border-gray-50">
+                    {selectedCustomer.ordersCount > 0 ? (
+                      <div className="flex items-start gap-3 p-3 bg-[#FAF7F2] rounded-xl border border-gray-50">
                         <Activity size={14} className="text-gray-300 mt-0.5" />
                         <div>
-                          <p className="text-sm text-gray-700">{event.action}</p>
-                          <p className="text-xs text-gray-400">{event.time}</p>
+                          <p className="text-sm text-gray-700">Order placed ({selectedCustomer.ordersCount} total)</p>
+                          <p className="text-xs text-gray-400">{selectedCustomer.joinedDate}</p>
                         </div>
                       </div>
-                    ))}
+                    ) : (
+                      <p className="text-sm text-gray-400 text-center py-8">No recent activity</p>
+                    )}
                   </div>
                 )}
               </div>

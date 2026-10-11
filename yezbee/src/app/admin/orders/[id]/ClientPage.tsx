@@ -7,59 +7,12 @@ import { api } from '@/lib/api'
 import {
   ArrowLeft, Printer, Send, XCircle, ChevronDown,
   Package, CreditCard, MapPin, User, Clock, AlertCircle,
-  CheckCircle, Truck, ShoppingBag, FileText
+  CheckCircle, Truck, ShoppingBag, FileText, Loader2,
+  Mail, Copy, Check, Sparkles
 } from 'lucide-react'
 import InvoiceDownloadDropdown from '@/components/admin/InvoiceDownloadDropdown'
 import InvoiceDownloadModal from '@/components/admin/InvoiceDownloadModal'
 import { InvoiceData } from '@/lib/invoiceExporter'
-
-const orderData = {
-  id: '20260042',
-  date: '2026-07-30T14:23:00',
-  status: 'confirmed' as const,
-  payment: 'paid' as const,
-  paymentMethod: 'Credit Card (HDFC)',
-  subtotal: 42500,
-  shipping: 0,
-  discount: 0,
-  tax: 7650,
-  total: 50150,
-  notes: 'Customer requested gift wrapping. Please ensure premium packaging.',
-  customer: {
-    name: 'Priya Sharma',
-    email: 'priya.sharma@email.com',
-    phone: '+91 98765 43210',
-    ordersCount: 5,
-    joinedDate: '2025-03-15',
-  },
-  shippingAddress: {
-    line1: '42, Rosewood Apartments',
-    line2: 'Banjara Hills, Road No. 12',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    pincode: '500034',
-    country: 'India',
-  },
-  billingAddress: {
-    line1: '42, Rosewood Apartments',
-    line2: 'Banjara Hills, Road No. 12',
-    city: 'Hyderabad',
-    state: 'Telangana',
-    pincode: '500034',
-    country: 'India',
-  },
-  items: [
-    { id: 1, name: 'Silk Evening Gown - Gold', sku: 'YEB-SEG-001-GD-M', size: 'M', color: 'Gold', price: 42500, quantity: 1, image: '/images/maternity/slide3.jpg' },
-    { id: 2, name: 'Statement Necklace - Pearl', sku: 'YEB-SN-010-PL', size: 'Free Size', color: 'Pearl White', price: 12500, quantity: 1, image: '/images/haute_accessories.jpg' },
-    { id: 3, name: 'Embellished Heels - Nude', sku: 'YEB-EH-012-ND-7', size: 'UK 7', color: 'Nude', price: 18500, quantity: 1, image: '/images/western_chic.jpg' },
-  ],
-  timeline: [
-    { action: 'Order Placed', timestamp: '2026-07-30T14:23:00', user: 'Priya Sharma', note: '' },
-    { action: 'Payment Received', timestamp: '2026-07-30T14:25:00', user: 'System', note: '₹50,150 via Credit Card' },
-    { action: 'Order Confirmed', timestamp: '2026-07-30T15:00:00', user: 'Aarav Mehta', note: 'Inventory verified' },
-    { action: 'Processing Started', timestamp: '2026-07-30T16:30:00', user: 'System', note: 'Items sent to packaging' },
-  ],
-}
 
 const statuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'] as const
 
@@ -91,55 +44,125 @@ export default function OrderDetailPage() {
 
   const [realOrder, setRealOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState<string>(orderData.status)
+  const [status, setStatus] = useState<string>('pending')
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [emailTemplate, setEmailTemplate] = useState<'confirmation' | 'shipped' | 'delivered' | 'custom'>('confirmation')
+  const [emailCopied, setEmailCopied] = useState(false)
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatus(newStatus)
+    setShowStatusDropdown(false)
+    setIsUpdatingStatus(true)
+    try {
+      const targetId = realOrder?._id || realOrder?.id || orderId
+      await api.updateOrderStatus(targetId, newStatus)
+    } catch (err) {
+      console.error('Error updating status:', err)
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
+  const handleConfirmCancel = async () => {
+    setShowCancelModal(false)
+    setStatus('cancelled')
+    try {
+      const targetId = realOrder?._id || realOrder?.id || orderId
+      await api.updateOrderStatus(targetId, 'cancelled', {
+        cancelReason: cancelReason || 'Cancelled by admin',
+      })
+    } catch (err) {
+      console.error('Error cancelling order:', err)
+    }
+  }
 
   useEffect(() => {
     if (!orderId) return
+    setLoading(true)
     api.getOrder(orderId).then((res: any) => {
       if (res && res.success && res.data) {
         const orderDoc: any = res.data
         setRealOrder(orderDoc)
         if (orderDoc.status) setStatus(orderDoc.status)
+      } else {
+        setRealOrder(null)
       }
+    }).catch(() => {
+      setRealOrder(null)
     }).finally(() => setLoading(false))
   }, [orderId])
 
-  const activeData = realOrder ? {
-    id: realOrder.id || realOrder._id || orderId,
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
+        <Loader2 className="animate-spin text-[#C9A84C] mb-3" size={32} />
+        <p className="text-sm font-medium">Loading order details...</p>
+      </div>
+    )
+  }
+
+  if (!realOrder) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-4 text-red-500">
+          <AlertCircle size={28} />
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900">Order Not Found</h2>
+        <p className="text-sm text-gray-500 mt-1 mb-6 max-w-md">
+          The requested order (ID: <span className="font-mono font-medium text-gray-700">{orderId}</span>) could not be found in the database.
+        </p>
+        <button
+          onClick={() => router.push('/admin/orders')}
+          className="px-5 py-2.5 text-sm font-medium text-white bg-[#C9A84C] hover:bg-[#B8973B] rounded-xl shadow-md shadow-[#C9A84C]/20 transition-all"
+        >
+          Back to Orders
+        </button>
+      </div>
+    )
+  }
+
+  const activeData = {
+    id: realOrder.orderNumber || realOrder.id || realOrder._id || orderId,
+    _id: realOrder._id || orderId,
     date: realOrder.createdAt || new Date().toISOString(),
     status: realOrder.status || 'pending',
     payment: realOrder.payment || 'unpaid',
-    paymentMethod: realOrder.paymentMethod || 'Razorpay / Online',
+    paymentMethod: realOrder.paymentMethod || 'COD / Online',
     subtotal: realOrder.totalAmount || 0,
     shipping: 0,
     discount: 0,
     tax: 0,
     total: realOrder.totalAmount || 0,
-    notes: realOrder.notes || 'Order placed online.',
+    notes: realOrder.notes || '',
     customer: {
-      name: realOrder.shippingAddress ? `${realOrder.shippingAddress.firstName} ${realOrder.shippingAddress.lastName || ''}`.trim() : 'Customer',
+      name: realOrder.shippingAddress
+        ? `${realOrder.shippingAddress.firstName} ${realOrder.shippingAddress.lastName || ''}`.trim()
+        : 'Guest Customer',
       email: realOrder.shippingAddress?.email || 'N/A',
       phone: realOrder.shippingAddress?.phone || 'N/A',
       ordersCount: 1,
       joinedDate: realOrder.createdAt || new Date().toISOString(),
     },
     shippingAddress: {
-      line1: realOrder.shippingAddress?.address1 || 'Address Line',
-      line2: realOrder.shippingAddress?.address2 || '',
+      line1: realOrder.shippingAddress?.address1 || realOrder.shippingAddress?.line1 || 'Address not provided',
+      line2: realOrder.shippingAddress?.address2 || realOrder.shippingAddress?.line2 || '',
       city: realOrder.shippingAddress?.city || '',
       state: realOrder.shippingAddress?.state || '',
       pincode: realOrder.shippingAddress?.pincode || '',
-      country: 'India',
+      country: realOrder.shippingAddress?.country || 'India',
     },
     items: Array.isArray(realOrder.items) && realOrder.items.length > 0
       ? realOrder.items.map((it: any, idx: number) => ({
           id: idx + 1,
-          name: it.name || 'Product',
-          sku: it.sku || it.product || `SKU-${idx}`,
+          name: it.name || 'Product Item',
+          sku: it.sku || it.product || `SKU-${idx + 1}`,
           size: it.size || it.meta?.size || '',
           color: it.color || it.meta?.color || '',
           meta: it.meta || { size: it.size || '', color: it.color || '' },
@@ -147,12 +170,98 @@ export default function OrderDetailPage() {
           quantity: it.quantity || 1,
           image: it.image || '',
         }))
-      : orderData.items,
+      : [],
     timeline: [
       { action: 'Order Placed', timestamp: realOrder.createdAt || new Date().toISOString(), user: realOrder.shippingAddress?.firstName || 'Customer', note: '' },
-      { action: 'Payment Received', timestamp: realOrder.createdAt || new Date().toISOString(), user: 'System', note: `${realOrder.paymentMethod || 'Online'} Payment` },
+      { action: 'Payment Status', timestamp: realOrder.createdAt || new Date().toISOString(), user: 'System', note: `${realOrder.paymentMethod || 'Online'} - ${realOrder.payment || 'unpaid'}` },
     ],
-  } : orderData
+  }
+
+  const applyEmailTemplate = (templateType: 'confirmation' | 'shipped' | 'delivered' | 'custom', data: typeof activeData) => {
+    setEmailTemplate(templateType)
+    if (templateType === 'confirmation') {
+      setEmailSubject(`Order Confirmed - #${data.id} | YEZ BEE Fashion`)
+      setEmailBody(
+`Dear ${data.customer.name},
+
+Thank you for shopping with YEZ BEE Fashion! We are delighted to confirm that your order #${data.id} has been received and confirmed.
+
+Order Summary:
+- Order ID: #${data.id}
+- Items: ${data.items.length} item(s)
+- Total Amount: ₹${data.total.toLocaleString()}
+- Payment Method: ${data.paymentMethod}
+
+We will notify you once your package is dispatched. If you need any assistance, please reach out to us.
+
+Warm regards,
+YEZ BEE Fashion Team`
+      )
+    } else if (templateType === 'shipped') {
+      setEmailSubject(`Your Order #${data.id} is On The Way! | YEZ BEE Fashion`)
+      setEmailBody(
+`Dear ${data.customer.name},
+
+Exciting news! Your order #${data.id} has been dispatched and is currently in transit.
+
+Delivery Address:
+${data.shippingAddress.line1}${data.shippingAddress.line2 ? ', ' + data.shippingAddress.line2 : ''}
+${data.shippingAddress.city}, ${data.shippingAddress.state} - ${data.shippingAddress.pincode}
+
+Our delivery partner will reach out to you once the package is out for delivery.
+
+Warm regards,
+YEZ BEE Fashion Team`
+      )
+    } else if (templateType === 'delivered') {
+      setEmailSubject(`Delivered: Your Order #${data.id} | YEZ BEE Fashion`)
+      setEmailBody(
+`Dear ${data.customer.name},
+
+Your order #${data.id} has been successfully delivered!
+
+We hope you love your new YEZ BEE outfit. We would be thrilled to receive your feedback.
+
+Thank you for choosing YEZ BEE Fashion!
+
+Warm regards,
+YEZ BEE Fashion Team`
+      )
+    } else {
+      setEmailSubject(`Update regarding Order #${data.id} | YEZ BEE Fashion`)
+      setEmailBody(
+`Dear ${data.customer.name},
+
+We are reaching out to you regarding your order #${data.id}.
+
+
+
+Warm regards,
+YEZ BEE Fashion Team`
+      )
+    }
+  }
+
+  const handleOpenEmailModal = () => {
+    applyEmailTemplate('confirmation', activeData)
+    setShowEmailModal(true)
+  }
+
+  const handleCopyEmail = () => {
+    const fullText = `To: ${activeData.customer.email}\nSubject: ${emailSubject}\n\n${emailBody}`
+    navigator.clipboard.writeText(fullText)
+    setEmailCopied(true)
+    setTimeout(() => setEmailCopied(false), 2500)
+  }
+
+  const handleSendMailto = () => {
+    if (!activeData.customer.email || activeData.customer.email === 'N/A') {
+      alert('No valid customer email address available for this order.')
+      return
+    }
+    const mailtoUrl = `mailto:${encodeURIComponent(activeData.customer.email)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+    window.location.href = mailtoUrl
+  }
 
   return (
     <motion.div
@@ -194,6 +303,7 @@ export default function OrderDetailPage() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={handleOpenEmailModal}
             className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-gray-600 bg-white rounded-xl border border-gray-100 shadow-sm hover:bg-[#FAF7F2] transition-all"
           >
             <Send size={15} />
@@ -441,7 +551,7 @@ export default function OrderDetailPage() {
                   {statuses.map((s: string) => (
                     <button
                       key={s}
-                      onClick={() => { setStatus(s); setShowStatusDropdown(false) }}
+                      onClick={() => handleStatusChange(s)}
                       className={`w-full px-4 py-2.5 text-sm text-left capitalize hover:bg-[#FAF7F2] transition-colors ${
                         s === status ? 'text-[#C9A84C] font-medium bg-[#F5E6C8]/20' : 'text-gray-700'
                       }`}
@@ -510,7 +620,7 @@ export default function OrderDetailPage() {
                   Keep Order
                 </button>
                 <button
-                  onClick={() => setShowCancelModal(false)}
+                  onClick={handleConfirmCancel}
                   className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
                 >
                   Cancel Order
@@ -526,6 +636,132 @@ export default function OrderDetailPage() {
         onClose={() => setShowInvoiceModal(false)}
         order={activeData}
       />
+
+      {/* Email Customer Modal */}
+      <AnimatePresence>
+        {showEmailModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+            onClick={() => setShowEmailModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#FAF7F2] border border-[#C9A84C]/30 flex items-center justify-center text-[#C9A84C]">
+                    <Mail size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900">Email Customer</h3>
+                    <p className="text-xs text-gray-500">Send an update directly to {activeData.customer.name}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <XCircle size={18} />
+                </button>
+              </div>
+
+              <div className="py-4 space-y-4 overflow-y-auto pr-1">
+                {/* Template Selector */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1.5">Select Template</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { key: 'confirmation', label: 'Confirmed' },
+                      { key: 'shipped', label: 'Shipped' },
+                      { key: 'delivered', label: 'Delivered' },
+                      { key: 'custom', label: 'Custom' },
+                    ].map((tpl) => (
+                      <button
+                        key={tpl.key}
+                        onClick={() => applyEmailTemplate(tpl.key as any, activeData)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all text-center ${
+                          emailTemplate === tpl.key
+                            ? 'bg-[#C9A84C] text-white border-[#C9A84C] shadow-sm'
+                            : 'bg-white text-gray-600 border-gray-200 hover:bg-[#FAF7F2]'
+                        }`}
+                      >
+                        {tpl.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recipient */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Recipient Email</label>
+                  <div className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-mono text-gray-700">
+                    <User size={13} className="text-gray-400" />
+                    <span>{activeData.customer.name} &lt;{activeData.customer.email}&gt;</span>
+                  </div>
+                </div>
+
+                {/* Subject */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C]"
+                  />
+                </div>
+
+                {/* Body */}
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 block mb-1">Message Body</label>
+                  <textarea
+                    rows={8}
+                    value={emailBody}
+                    onChange={(e) => setEmailBody(e.target.value)}
+                    className="w-full text-xs px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/30 focus:border-[#C9A84C] font-sans leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all"
+                >
+                  {emailCopied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                  <span>{emailCopied ? 'Copied to Clipboard!' : 'Copy Content'}</span>
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailModal(false)}
+                    className="px-3.5 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendMailto}
+                    className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#C9A84C] hover:bg-[#B8973B] rounded-xl shadow-md shadow-[#C9A84C]/20 transition-all"
+                  >
+                    <Send size={14} />
+                    <span>Open in Email App</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

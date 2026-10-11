@@ -610,10 +610,120 @@ export const api = {
         return { success: true, data: { _id: docItem.id, id: numId, orderNumber: numId, ...data } };
       }
 
+      // Check all docs in collection if still not found
+      const allSnap = await getDocs(collection(db, 'orders'));
+      const matchedDoc = allSnap.docs.find(d => {
+        const dData = d.data();
+        const dRawId = dData.orderNumber || dData.orderId || d.id;
+        return d.id === cleanId || formatNumericOrderId(dRawId) === cleanId || String(dData.orderNumber) === cleanId;
+      });
+
+      if (matchedDoc) {
+        const data = matchedDoc.data();
+        const rawId = data.orderNumber || data.orderId || matchedDoc.id;
+        const numId = formatNumericOrderId(rawId);
+        return { success: true, data: { _id: matchedDoc.id, id: numId, orderNumber: numId, ...data } };
+      }
+
       return { success: false, data: null };
     } catch (e) {
       console.error(e);
       return { success: false, data: null };
+    }
+  },
+
+  updateOrderStatus: async (id: string, status: string, extraData?: any) => {
+    try {
+      const { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+
+      const cleanId = String(id || '').replace(/^#/, '').trim();
+      if (!cleanId) return { success: false, error: 'Invalid order ID' };
+
+      const updateData = {
+        status: status.toLowerCase(),
+        updatedAt: new Date().toISOString(),
+        ...(extraData || {}),
+      };
+
+      // 1. Try directly by doc ID
+      try {
+        const directRef = doc(db, 'orders', cleanId);
+        const snap = await getDoc(directRef);
+        if (snap.exists()) {
+          await updateDoc(directRef, updateData);
+          return { success: true };
+        }
+      } catch (err) {
+        // Fall through to query
+      }
+
+      // 2. Search by orderNumber
+      const q = query(collection(db, 'orders'), where('orderNumber', '==', cleanId), limit(1));
+      let qSnap = await getDocs(q);
+      if (qSnap.empty && !isNaN(Number(cleanId))) {
+        const numQ = query(collection(db, 'orders'), where('orderNumber', '==', Number(cleanId)), limit(1));
+        qSnap = await getDocs(numQ);
+      }
+
+      if (!qSnap.empty) {
+        await updateDoc(qSnap.docs[0].ref, updateData);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Order not found' };
+    } catch (e: any) {
+      console.error('Failed to update order status:', e);
+      return { success: false, error: e?.message || 'Update failed' };
+    }
+  },
+
+  updateBulkOrdersStatus: async (ids: string[], status: string) => {
+    try {
+      const { doc, getDoc, updateDoc, collection, query, where, getDocs, limit } = await import('firebase/firestore');
+      const { db } = await import('./firebase');
+
+      const updateData = {
+        status: status.toLowerCase(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      for (const id of ids) {
+        const cleanId = String(id || '').replace(/^#/, '').trim();
+        if (!cleanId) continue;
+
+        let targetRef: any = null;
+        try {
+          const directRef = doc(db, 'orders', cleanId);
+          const snap = await getDoc(directRef);
+          if (snap.exists()) {
+            targetRef = directRef;
+          }
+        } catch {
+          // Ignore
+        }
+
+        if (!targetRef) {
+          const q = query(collection(db, 'orders'), where('orderNumber', '==', cleanId), limit(1));
+          let qSnap = await getDocs(q);
+          if (qSnap.empty && !isNaN(Number(cleanId))) {
+            const numQ = query(collection(db, 'orders'), where('orderNumber', '==', Number(cleanId)), limit(1));
+            qSnap = await getDocs(numQ);
+          }
+          if (!qSnap.empty) {
+            targetRef = qSnap.docs[0].ref;
+          }
+        }
+
+        if (targetRef) {
+          await updateDoc(targetRef, updateData);
+        }
+      }
+
+      return { success: true };
+    } catch (e: any) {
+      console.error('Failed to update bulk orders status:', e);
+      return { success: false, error: e?.message || 'Bulk update failed' };
     }
   },
 
@@ -632,12 +742,19 @@ export const api = {
           if (!customersMap.has(email)) {
             customersMap.set(email, {
               id: email,
-              name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
+              name: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName || ''}`.trim(),
               email: email,
-              phone: order.shippingAddress.phone,
+              phone: order.shippingAddress.phone || 'N/A',
+              address: order.shippingAddress,
               totalOrders: 1,
               totalSpent: order.totalAmount || 0,
               lastOrder: order.createdAt,
+              orders: [{
+                id: order.orderNumber || order.id || doc.id,
+                date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : 'Recent',
+                total: order.totalAmount || 0,
+                status: order.status || 'pending',
+              }],
             });
           } else {
             const c = customersMap.get(email);
@@ -645,7 +762,14 @@ export const api = {
             c.totalSpent += (order.totalAmount || 0);
             if (new Date(order.createdAt) > new Date(c.lastOrder)) {
               c.lastOrder = order.createdAt;
+              c.address = order.shippingAddress;
             }
+            c.orders.push({
+              id: order.orderNumber || order.id || doc.id,
+              date: order.createdAt ? new Date(order.createdAt).toISOString().split('T')[0] : 'Recent',
+              total: order.totalAmount || 0,
+              status: order.status || 'pending',
+            });
           }
         }
       });
