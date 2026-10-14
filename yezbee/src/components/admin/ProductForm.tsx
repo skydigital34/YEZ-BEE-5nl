@@ -92,6 +92,7 @@ interface ProductFormProps {
 export default function ProductForm({ mode, productId, initialData }: ProductFormProps) {
   const router = useRouter();
 
+  const [actualDocId, setActualDocId] = useState(productId || '');
   const [categoriesList, setCategoriesList] = useState<any[]>(YEZBEE_CATEGORIES);
   const [fetchingProduct, setFetchingProduct] = useState(mode === 'edit');
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -107,12 +108,22 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
   const [productType, setProductType] = useState<'FEEDING' | 'NON-FEEDING' | 'BOTH' | null>('FEEDING');
   const [subcategory, setSubcategory] = useState<'Feeding' | 'Non-Feeding' | 'Both' | '' | null>('Feeding');
 
+  // Customer Badge Flags
+  const [maternity, setMaternity] = useState(true);
+  const [feedingFriendly, setFeedingFriendly] = useState(true);
+
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [fabric, setFabric] = useState('100% Pure Cotton');
   const [fit, setFit] = useState('Relaxed Fit');
   const [pattern, setPattern] = useState('Printed');
+  const [neckStyle, setNeckStyle] = useState('Round Neck');
+  const [sleeveLength, setSleeveLength] = useState('3/4th Sleeve');
+  const [length, setLength] = useState('Regular');
   const [occasion, setOccasion] = useState('Casual Wear');
+  const [gender, setGender] = useState('Women');
+  const [shippingInfo, setShippingInfo] = useState('Dispatched within 24 hours. Free delivery nationwide.');
+  const [returnPolicy, setReturnPolicy] = useState('7-day doorstep exchange and return policy.');
   const [careInstructions, setCareInstructions] = useState('Hand wash cold with gentle detergent');
   const [highlights, setHighlights] = useState<string[]>([
     'Dual vertical concealed feeding zips for discrete nursing',
@@ -249,6 +260,19 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       setProductType(null);
       setSubcategory(null);
     }
+
+    if (p._id || p.id) {
+      setActualDocId(p._id || p.id);
+    }
+
+    setMaternity(p.maternity !== undefined ? Boolean(p.maternity) : Boolean(p.productType === 'FEEDING' || p.subcategory === 'Feeding' || p.tags?.includes('maternity')));
+    setFeedingFriendly(p.feedingFriendly !== undefined ? Boolean(p.feedingFriendly) : Boolean(p.productType === 'FEEDING' || p.subcategory === 'Feeding' || p.tags?.includes('feeding')));
+    setNeckStyle(p.neckStyle || 'Round Neck');
+    setSleeveLength(p.sleeveLength || '3/4th Sleeve');
+    setLength(p.length || 'Regular');
+    setGender(p.gender || 'Women');
+    setShippingInfo(p.shippingInfo || 'Dispatched within 24 hours. Free delivery nationwide.');
+    setReturnPolicy(p.returnPolicy || '7-day doorstep exchange and return policy.');
 
     setShortDescription(p.shortDescription || '');
     setDescription(p.description || '');
@@ -407,20 +431,23 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       setFetchingProduct(true);
       setFetchError(null);
 
-      api.getProduct(productId)
+      // 1. Try fetching directly by document ID
+      api.getProductById(productId)
         .then((res) => {
           if (res && res.data) {
             normalizeProductForForm(res.data);
             setFetchingProduct(false);
           } else {
-            api.getProductById(productId)
-              .then((resId) => {
-                if (resId && resId.data) {
-                  normalizeProductForForm(resId.data);
+            // 2. Try fetching by slug
+            api.getProduct(productId)
+              .then((resSlug) => {
+                if (resSlug && resSlug.data) {
+                  normalizeProductForForm(resSlug.data);
+                  setFetchingProduct(false);
                 } else {
-                  // Fallback to local cache for mock products not in Firebase yet
-                  import('@/data/products').then(({ getProductById }) => {
-                    const localProduct = getProductById(productId);
+                  // Fallback to local cache
+                  import('@/data/products').then(({ getProductById, getProductBySlug }) => {
+                    const localProduct = getProductById(productId) || getProductBySlug(productId);
                     if (localProduct) {
                       normalizeProductForForm(localProduct);
                     } else if (initialData) {
@@ -428,28 +455,29 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
                     } else {
                       setFetchError('Product not found in database.');
                     }
-                  });
+                  }).finally(() => setFetchingProduct(false));
                 }
               })
-              .catch((err) => {
-                console.error(err);
-                setFetchError('Error loading product.');
-              })
-              .finally(() => setFetchingProduct(false));
+              .catch(() => {
+                setFetchError('Product not found in database.');
+                setFetchingProduct(false);
+              });
           }
         })
         .catch((err) => {
-          console.warn('Could not fetch product from backend API:', err);
-          import('@/data/products').then(({ getProductById }) => {
-            const localProduct = getProductById(productId);
-            if (localProduct) {
-              normalizeProductForForm(localProduct);
-            } else if (initialData) {
-              normalizeProductForForm(initialData);
-            } else {
-              setFetchError('Product not found in database.');
-            }
-          }).finally(() => setFetchingProduct(false));
+          console.warn('getProductById failed, trying getProduct slug fallback:', err);
+          api.getProduct(productId)
+            .then((resSlug) => {
+              if (resSlug && resSlug.data) {
+                normalizeProductForForm(resSlug.data);
+              } else if (initialData) {
+                normalizeProductForForm(initialData);
+              } else {
+                setFetchError('Product not found in database.');
+              }
+            })
+            .catch(() => setFetchError('Product not found in database.'))
+            .finally(() => setFetchingProduct(false));
         });
     } else if (initialData) {
       normalizeProductForForm(initialData);
@@ -1015,12 +1043,17 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       categoryName: currentCategoryConfig?.name || selectedCategory.toUpperCase(),
       productType: hasFeedingSplit ? productType : null,
       subcategory: hasFeedingSplit ? (productType === 'FEEDING' ? 'Feeding' : productType === 'NON-FEEDING' ? 'Non-Feeding' : 'Both') : null,
+      maternity,
+      feedingFriendly,
       shortDescription,
       description: description || shortDescription,
+      highlights: highlights.filter((h) => Boolean(h && h.trim())),
       brand,
       price: Number(price) || 0,
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : undefined,
+      costPrice: costPrice ? Number(costPrice) : undefined,
       discount: calcDiscountPercent,
+      discountPercentage: calcDiscountPercent,
       status: targetStatus,
       featured,
       bestSeller,
@@ -1029,12 +1062,19 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
       fabric,
       fit,
       pattern,
+      neckStyle,
+      sleeveLength,
+      length,
       occasion,
-      careInstructions: careInstructions.split(',').map((c) => c.trim()).filter(Boolean),
+      gender,
+      shippingInfo,
+      returnPolicy,
+      careInstructions: typeof careInstructions === 'string' ? careInstructions.split(',').map((c) => c.trim()).filter(Boolean) : careInstructions,
       images: formattedImages,
       colors: selectedColors,
       sizes: selectedSizes,
       variants: formattedVariants,
+      stock: totalStock,
       seo: {
         title: seoTitle || `${name} | YEZ BEE Fashion`,
         description: seoDescription || shortDescription || name,
@@ -1044,10 +1084,11 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
     };
 
     try {
-      if (mode === 'edit' && productId) {
-        const updateRes = await api.updateProduct(productId, apiPayload);
+      const targetId = actualDocId || productId;
+      if (mode === 'edit' && targetId) {
+        await api.updateProduct(targetId, apiPayload);
         saveOrUpdateProduct({
-          id: productId,
+          id: targetId,
           ...apiPayload,
           categoryName: currentCategoryConfig?.name || selectedCategory.toUpperCase(),
           status: targetStatus.toLowerCase(),
@@ -1885,6 +1926,139 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Neck Style</label>
+                <input
+                  type="text"
+                  value={neckStyle}
+                  onChange={(e) => setNeckStyle(e.target.value)}
+                  placeholder="e.g. Design Neck, Round Neck"
+                  className="w-full px-3 py-2 text-xs border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Sleeve Type & Length</label>
+                <input
+                  type="text"
+                  value={sleeveLength}
+                  onChange={(e) => setSleeveLength(e.target.value)}
+                  placeholder="e.g. Half Sleeve (Puff Hand)"
+                  className="w-full px-3 py-2 text-xs border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Garment Length</label>
+                <input
+                  type="text"
+                  value={length}
+                  onChange={(e) => setLength(e.target.value)}
+                  placeholder="e.g. 48 inches / Maxi"
+                  className="w-full px-3 py-2 text-xs border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Target Gender</label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-3 py-2 text-xs border rounded-xl bg-white cursor-pointer"
+                >
+                  <option value="Women">Women</option>
+                  <option value="Girls">Girls</option>
+                  <option value="Kids">Kids</option>
+                  <option value="Unisex">Unisex</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-2 border-t border-gray-100">
+              <label className="text-xs font-bold text-gray-700 flex items-center justify-between">
+                <span>Key Product Highlights (Customer Bullet Points)</span>
+                <span className="text-[10px] text-gray-400 font-normal">{highlights.length} bullet points</span>
+              </label>
+
+              <div className="space-y-2">
+                {highlights.map((hl, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[var(--color-primary-gold)] shrink-0" />
+                    <input
+                      type="text"
+                      value={hl}
+                      onChange={(e) => {
+                        const updated = [...highlights];
+                        updated[idx] = e.target.value;
+                        setHighlights(updated);
+                      }}
+                      className="flex-1 px-3 py-1.5 text-xs border rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setHighlights(highlights.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Remove highlight"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="text"
+                  value={newHighlight}
+                  onChange={(e) => setNewHighlight(e.target.value)}
+                  placeholder="e.g. Dual vertical concealed feeding zips for discrete nursing"
+                  className="flex-1 px-3 py-2 text-xs border rounded-xl outline-none focus:border-[var(--color-primary-gold)]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (newHighlight.trim()) {
+                        setHighlights([...highlights, newHighlight.trim()]);
+                        setNewHighlight('');
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newHighlight.trim()) {
+                      setHighlights([...highlights, newHighlight.trim()]);
+                      setNewHighlight('');
+                    }
+                  }}
+                  className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl flex items-center gap-1.5 shrink-0"
+                >
+                  <Plus size={14} /> Add Highlight
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Shipping Information</label>
+                <input
+                  type="text"
+                  value={shippingInfo}
+                  onChange={(e) => setShippingInfo(e.target.value)}
+                  placeholder="Dispatched within 24 hours. Free delivery nationwide."
+                  className="w-full px-3 py-2 text-xs border rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-700 block mb-1">Return & Exchange Policy</label>
+                <input
+                  type="text"
+                  value={returnPolicy}
+                  onChange={(e) => setReturnPolicy(e.target.value)}
+                  placeholder="7-day doorstep exchange and return policy."
+                  className="w-full px-3 py-2 text-xs border rounded-xl"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="text-xs font-bold text-gray-700 block mb-1">Wash & Care Instructions</label>
               <input
@@ -1968,6 +2142,37 @@ export default function ProductForm({ mode, productId, initialData }: ProductFor
             </div>
 
             <div className="space-y-3 pt-2">
+              <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 space-y-2.5">
+                <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider block">
+                  Customer Badges (Storefront)
+                </span>
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <span className="text-xs font-bold text-gray-800 block">Maternity Friendly</span>
+                    <span className="text-[10px] text-gray-500">Shows "MATERNITY FRIENDLY" badge</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={maternity}
+                    onChange={(e) => setMaternity(e.target.checked)}
+                    className="rounded text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)] h-4 w-4"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <span className="text-xs font-bold text-gray-800 block">Nursing Access</span>
+                    <span className="text-[10px] text-gray-500">Shows "NURSING ACCESS" badge</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={feedingFriendly}
+                    onChange={(e) => setFeedingFriendly(e.target.checked)}
+                    className="rounded text-[var(--color-primary-gold)] focus:ring-[var(--color-primary-gold)] h-4 w-4"
+                  />
+                </label>
+              </div>
+
               <label className="flex items-center justify-between cursor-pointer">
                 <span className="text-xs font-bold text-gray-700">Featured on Homepage</span>
                 <input

@@ -86,9 +86,9 @@ export default function ProductCard({
 
   const isWishlisted = isInWishlist(id);
   const numRating = typeof rating === 'string' ? parseFloat(rating) : rating;
-  const displayPrice = Number(price) || 999;
-  const displayCompare = comparePrice !== undefined && comparePrice !== null ? Number(comparePrice) : 1499;
-  const calcDiscount = discount || (displayCompare && displayCompare > displayPrice ? Math.round(((displayCompare - displayPrice) / displayCompare) * 100) : 33);
+  const displayPrice = Number(price) || 0;
+  const displayCompare = comparePrice !== undefined && comparePrice !== null && Number(comparePrice) > displayPrice ? Number(comparePrice) : null;
+  const calcDiscount = discount !== undefined && discount !== null ? Number(discount) : (displayCompare && displayCompare > displayPrice ? Math.round(((displayCompare - displayPrice) / displayCompare) * 100) : 0);
 
   const rawImage = isHovered && secondaryImage ? secondaryImage : primaryImage;
   const displayImage = imgError ? '' : rawImage;
@@ -275,7 +275,7 @@ export default function ProductCard({
             <span className="font-sans text-base font-bold text-[var(--color-dark)]">
               ₹{displayPrice.toLocaleString('en-IN')}
             </span>
-            {displayCompare > displayPrice && (
+            {displayCompare !== null && displayCompare > displayPrice && (
               <span className="text-xs text-[var(--color-dark)]/40 line-through">
                 ₹{displayCompare.toLocaleString('en-IN')}
               </span>

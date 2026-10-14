@@ -372,14 +372,28 @@ export function normalizeProduct(p: any): any {
     ? p.category.name
     : (p.categoryName || p.subcategory || rawCatSlug.toUpperCase());
 
+  const minPrice = typeof p.price === 'number'
+    ? p.price
+    : (Array.isArray(p.variants) && p.variants.length > 0
+        ? p.variants.reduce((min: number, v: any) => Math.min(min, Number(v.price) || Infinity), Infinity)
+        : Number(p.price) || 0);
+
+  const maxCompare = p.compareAtPrice !== undefined && p.compareAtPrice !== null
+    ? Number(p.compareAtPrice)
+    : (p.comparePrice !== undefined && p.comparePrice !== null ? Number(p.comparePrice) : null);
+
+  const calcDiscount = p.discount !== undefined
+    ? Number(p.discount)
+    : (p.discountPercentage !== undefined
+        ? Number(p.discountPercentage)
+        : (maxCompare && maxCompare > minPrice ? Math.round(((maxCompare - minPrice) / maxCompare) * 100) : 0));
+
   const variants = (Array.isArray(p.variants) ? p.variants : []).map((v: any) => ({
     ...v,
-    price: 999,
-    compareAtPrice: 1499,
+    price: typeof v.price === 'number' ? v.price : (Number(v.price) || minPrice),
+    compareAtPrice: v.compareAtPrice !== undefined && v.compareAtPrice !== null ? Number(v.compareAtPrice) : (maxCompare || undefined),
+    stock: typeof v.stock === 'number' ? v.stock : Number(v.stock) || 0,
   }));
-  const minPrice = 999;
-  const maxCompare = 1499;
-  const calcDiscount = 33;
 
   const colors = Array.isArray(p.colors) && p.colors.length > 0
     ? p.colors.map((c: any) => (typeof c === 'string' ? { name: c, hex: '#000000' } : c))
@@ -396,7 +410,9 @@ export function normalizeProduct(p: any): any {
       ? Array.from(new Set(variants.map((v: any) => v.size).filter(Boolean)))
       : ['S', 'M', 'L'];
 
-  const totalStock = variants.length > 0 ? variants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0) : (Number(p.stock) || 10);
+  const totalStock = typeof p.stock === 'number'
+    ? p.stock
+    : (variants.length > 0 ? variants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0) : 0);
 
   return {
     ...p,
@@ -406,9 +422,9 @@ export function normalizeProduct(p: any): any {
     slug: p.slug || id,
     description: p.description || '',
     shortDescription: p.shortDescription || '',
-    price: 999,
-    compareAtPrice: 1499,
-    discountPercentage: 33,
+    price: minPrice,
+    compareAtPrice: maxCompare,
+    discountPercentage: calcDiscount,
     category: categorySlug,
     categoryName,
     subcategory: p.subcategory || null,

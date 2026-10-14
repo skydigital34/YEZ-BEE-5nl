@@ -224,18 +224,42 @@ export const api = {
         return 0;
       });
 
-      const normalizedList = products.map((p: any) => ({
-        ...p,
-        price: 999,
-        compareAtPrice: 1499,
-        discount: 33,
-        discountPercentage: 33,
-        variants: (Array.isArray(p.variants) ? p.variants : []).map((v: any) => ({
-          ...v,
-          price: 999,
-          compareAtPrice: 1499,
-        })),
-      }));
+      const normalizedList = products.map((p: any) => {
+        const prodPrice = typeof p.price === 'number' ? p.price : Number(p.price) || 0;
+        const prodCompare = p.compareAtPrice !== undefined && p.compareAtPrice !== null
+          ? Number(p.compareAtPrice)
+          : (p.comparePrice ? Number(p.comparePrice) : null);
+        const prodDiscount = p.discount !== undefined
+          ? Number(p.discount)
+          : (p.discountPercentage !== undefined
+              ? Number(p.discountPercentage)
+              : (prodCompare && prodCompare > prodPrice ? Math.round(((prodCompare - prodPrice) / prodCompare) * 100) : 0));
+        const totalStock = typeof p.stock === 'number'
+          ? p.stock
+          : (Array.isArray(p.variants) ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) : 0);
+
+        return {
+          ...p,
+          _id: p._id || p.id,
+          id: p.id || p._id,
+          price: prodPrice,
+          compareAtPrice: prodCompare,
+          discount: prodDiscount,
+          discountPercentage: prodDiscount,
+          stock: totalStock,
+          maternity: p.maternity ?? Boolean(p.productType === 'FEEDING' || p.subcategory === 'Feeding' || p.tags?.includes('maternity')),
+          feedingFriendly: p.feedingFriendly ?? Boolean(p.productType === 'FEEDING' || p.subcategory === 'Feeding' || p.tags?.includes('feeding')),
+          variants: (Array.isArray(p.variants) ? p.variants : []).map((v: any, idx: number) => ({
+            ...v,
+            id: v.id || v._id || `v-${idx}`,
+            price: typeof v.price === 'number' ? v.price : Number(v.price) || prodPrice,
+            compareAtPrice: v.compareAtPrice !== undefined && v.compareAtPrice !== null ? Number(v.compareAtPrice) : (prodCompare || undefined),
+            stock: typeof v.stock === 'number' ? v.stock : Number(v.stock) || 0,
+            lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 5,
+            isActive: v.isActive !== false,
+          })),
+        };
+      });
 
       return { success: true, data: normalizedList, pagination: { page: 1, limit: 200, total: normalizedList.length, totalPages: 1, hasNext: false, hasPrev: false } };
     } catch (e) {
@@ -244,58 +268,74 @@ export const api = {
     }
   },
 
-  getProduct: async (slug: string): Promise<any> => {
+  getProduct: async (slugOrId: string): Promise<any> => {
     try {
       const { collection, getDocs, query, where, doc, getDoc } = await import('firebase/firestore');
       const { db } = await import('./firebase');
-      
-      const q = query(collection(db, 'products'), where('slug', '==', slug));
+
+      const parseDoc = (docSnap: any) => {
+        const data = docSnap.data();
+        const prodPrice = typeof data.price === 'number' ? data.price : Number(data.price) || 0;
+        const prodCompare = data.compareAtPrice !== undefined && data.compareAtPrice !== null
+          ? Number(data.compareAtPrice)
+          : (data.comparePrice ? Number(data.comparePrice) : null);
+        const prodDiscount = data.discount !== undefined
+          ? Number(data.discount)
+          : (data.discountPercentage !== undefined
+              ? Number(data.discountPercentage)
+              : (prodCompare && prodCompare > prodPrice ? Math.round(((prodCompare - prodPrice) / prodCompare) * 100) : 0));
+        const totalStock = typeof data.stock === 'number'
+          ? data.stock
+          : (Array.isArray(data.variants) ? data.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) : 0);
+
+        return {
+          _id: docSnap.id,
+          id: docSnap.id,
+          ...data,
+          price: prodPrice,
+          compareAtPrice: prodCompare,
+          discount: prodDiscount,
+          discountPercentage: prodDiscount,
+          stock: totalStock,
+          maternity: data.maternity ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('maternity')),
+          feedingFriendly: data.feedingFriendly ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('feeding')),
+          variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any, idx: number) => ({
+            ...v,
+            id: v.id || v._id || `v-${idx}`,
+            price: typeof v.price === 'number' ? v.price : Number(v.price) || prodPrice,
+            compareAtPrice: v.compareAtPrice !== undefined && v.compareAtPrice !== null ? Number(v.compareAtPrice) : (prodCompare || undefined),
+            stock: typeof v.stock === 'number' ? v.stock : Number(v.stock) || 0,
+            lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 5,
+            isActive: v.isActive !== false,
+          })),
+        };
+      };
+
+      // 1. Check if slugOrId directly exists as a Firestore doc ID
+      try {
+        const directRef = doc(db, 'products', slugOrId);
+        const directSnap = await getDoc(directRef);
+        if (directSnap.exists()) {
+          return { success: true, data: parseDoc(directSnap) };
+        }
+      } catch (err) {
+        // Not a direct doc ID or invalid characters, proceed to slug search
+      }
+
+      // 2. Query by slug
+      const q = query(collection(db, 'products'), where('slug', '==', slugOrId));
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
         const docSnap = querySnapshot.docs[0];
-        const data = docSnap.data();
-        return {
-          success: true,
-          data: {
-            _id: docSnap.id,
-            id: docSnap.id,
-            ...data,
-            price: 999,
-            compareAtPrice: 1499,
-            discount: 33,
-            discountPercentage: 33,
-            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
-              ...v,
-              price: 999,
-              compareAtPrice: 1499,
-            })),
-          } as any
-        };
+        return { success: true, data: parseDoc(docSnap) };
       }
-      
-      // Fallback: check if the 'slug' is actually a document ID
-      const docRef = doc(db, 'products', slug);
-      const docSnapById = await getDoc(docRef);
-      if (docSnapById.exists()) {
-        const data = docSnapById.data();
-        return {
-          success: true,
-          data: {
-            _id: docSnapById.id,
-            id: docSnapById.id,
-            ...data,
-            price: 999,
-            compareAtPrice: 1499,
-            discount: 33,
-            discountPercentage: 33,
-            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
-              ...v,
-              price: 999,
-              compareAtPrice: 1499,
-            })),
-          } as any
-        };
+
+      // 3. Case-insensitive slug fallback
+      const qLower = query(collection(db, 'products'), where('slug', '==', slugOrId.toLowerCase()));
+      const snapLower = await getDocs(qLower);
+      if (!snapLower.empty) {
+        return { success: true, data: parseDoc(snapLower.docs[0]) };
       }
       
       return { success: false, data: null };
@@ -312,20 +352,40 @@ export const api = {
       const docSnap = await getDoc(doc(db, 'products', id));
       if (docSnap.exists()) {
         const data = docSnap.data();
+        const prodPrice = typeof data.price === 'number' ? data.price : Number(data.price) || 0;
+        const prodCompare = data.compareAtPrice !== undefined && data.compareAtPrice !== null
+          ? Number(data.compareAtPrice)
+          : (data.comparePrice ? Number(data.comparePrice) : null);
+        const prodDiscount = data.discount !== undefined
+          ? Number(data.discount)
+          : (data.discountPercentage !== undefined
+              ? Number(data.discountPercentage)
+              : (prodCompare && prodCompare > prodPrice ? Math.round(((prodCompare - prodPrice) / prodCompare) * 100) : 0));
+        const totalStock = typeof data.stock === 'number'
+          ? data.stock
+          : (Array.isArray(data.variants) ? data.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) : 0);
+
         return {
           success: true,
           data: {
             _id: docSnap.id,
             id: docSnap.id,
             ...data,
-            price: 999,
-            compareAtPrice: 1499,
-            discount: 33,
-            discountPercentage: 33,
-            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+            price: prodPrice,
+            compareAtPrice: prodCompare,
+            discount: prodDiscount,
+            discountPercentage: prodDiscount,
+            stock: totalStock,
+            maternity: data.maternity ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('maternity')),
+            feedingFriendly: data.feedingFriendly ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('feeding')),
+            variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any, idx: number) => ({
               ...v,
-              price: 999,
-              compareAtPrice: 1499,
+              id: v.id || v._id || `v-${idx}`,
+              price: typeof v.price === 'number' ? v.price : Number(v.price) || prodPrice,
+              compareAtPrice: v.compareAtPrice !== undefined && v.compareAtPrice !== null ? Number(v.compareAtPrice) : (prodCompare || undefined),
+              stock: typeof v.stock === 'number' ? v.stock : Number(v.stock) || 0,
+              lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 5,
+              isActive: v.isActive !== false,
             })),
           } as any
         };
@@ -361,18 +421,38 @@ export const api = {
       const querySnapshot = await getDocs(collection(db, 'products'));
       const products = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        const prodPrice = typeof data.price === 'number' ? data.price : Number(data.price) || 0;
+        const prodCompare = data.compareAtPrice !== undefined && data.compareAtPrice !== null
+          ? Number(data.compareAtPrice)
+          : (data.comparePrice ? Number(data.comparePrice) : null);
+        const prodDiscount = data.discount !== undefined
+          ? Number(data.discount)
+          : (data.discountPercentage !== undefined
+              ? Number(data.discountPercentage)
+              : (prodCompare && prodCompare > prodPrice ? Math.round(((prodCompare - prodPrice) / prodCompare) * 100) : 0));
+        const totalStock = typeof data.stock === 'number'
+          ? data.stock
+          : (Array.isArray(data.variants) ? data.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) : 0);
+
         return {
           _id: doc.id,
           id: doc.id,
           ...data,
-          price: 999,
-          compareAtPrice: 1499,
-          discount: 33,
-          discountPercentage: 33,
-          variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any) => ({
+          price: prodPrice,
+          compareAtPrice: prodCompare,
+          discount: prodDiscount,
+          discountPercentage: prodDiscount,
+          stock: totalStock,
+          maternity: data.maternity ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('maternity')),
+          feedingFriendly: data.feedingFriendly ?? Boolean(data.productType === 'FEEDING' || data.subcategory === 'Feeding' || data.tags?.includes('feeding')),
+          variants: (Array.isArray(data.variants) ? data.variants : []).map((v: any, idx: number) => ({
             ...v,
-            price: 999,
-            compareAtPrice: 1499,
+            id: v.id || v._id || `v-${idx}`,
+            price: typeof v.price === 'number' ? v.price : Number(v.price) || prodPrice,
+            compareAtPrice: v.compareAtPrice !== undefined && v.compareAtPrice !== null ? Number(v.compareAtPrice) : (prodCompare || undefined),
+            stock: typeof v.stock === 'number' ? v.stock : Number(v.stock) || 0,
+            lowStockThreshold: typeof v.lowStockThreshold === 'number' ? v.lowStockThreshold : 5,
+            isActive: v.isActive !== false,
           })),
         };
       });

@@ -186,10 +186,25 @@ export default function ProductDetailPage() {
         const res = await api.getProduct(slug);
         if (res && res.data && isMounted) {
           const p = res.data;
-          const minPrice = Number(p.price) || (p.variants || []).reduce((min: number, v: any) => Math.min(min, Number(v.price) || Infinity), Infinity) || 999;
-          const maxCompare = Number(p.compareAtPrice) || (p.variants || []).reduce((max: number, v: any) => Math.max(max, Number(v.compareAtPrice) || 0), 0) || 1499;
-          const discountPct = Number(p.discount) || (maxCompare > minPrice && maxCompare > 0 ? Math.round(((maxCompare - minPrice) / maxCompare) * 100) : 33);
-          const totalStock = (p.variants || []).reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+          const minPrice = typeof p.price === 'number' && p.price > 0
+            ? p.price
+            : (Array.isArray(p.variants) && p.variants.length > 0
+                ? p.variants.reduce((min: number, v: any) => Math.min(min, Number(v.price) || Infinity), Infinity)
+                : Number(p.price) || 0);
+          const safeMinPrice = minPrice !== Infinity ? minPrice : (Number(p.price) || 0);
+          const maxCompare = p.compareAtPrice !== undefined && p.compareAtPrice !== null
+            ? Number(p.compareAtPrice)
+            : (Array.isArray(p.variants) && p.variants.length > 0
+                ? p.variants.reduce((max: number, v: any) => Math.max(max, Number(v.compareAtPrice) || 0), 0)
+                : null);
+          const discountPct = p.discount !== undefined
+            ? Number(p.discount)
+            : (p.discountPercentage !== undefined
+                ? Number(p.discountPercentage)
+                : (maxCompare && maxCompare > safeMinPrice ? Math.round(((maxCompare - safeMinPrice) / maxCompare) * 100) : 0));
+          const totalStock = typeof p.stock === 'number'
+            ? p.stock
+            : (Array.isArray(p.variants) ? p.variants.reduce((sum: number, v: any) => sum + (Number(v.stock) || 0), 0) : 0);
 
           const rawImages = Array.isArray(p.images) && p.images.length > 0
             ? p.images
@@ -228,8 +243,8 @@ export default function ProductDetailPage() {
             slug: p.slug || slug,
             description: p.description || '',
             shortDescription: p.shortDescription || p.description || '',
-            price: minPrice,
-            compareAtPrice: maxCompare && maxCompare > minPrice ? maxCompare : 1499,
+            price: safeMinPrice,
+            compareAtPrice: maxCompare && maxCompare > safeMinPrice ? maxCompare : null,
             discountPercentage: discountPct,
             category: p.category?.slug || p.category || 'casuals',
             categoryName: p.category?.name || p.subcategory || 'CASUALS',
