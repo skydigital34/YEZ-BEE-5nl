@@ -747,11 +747,6 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
-
-              <div className="mt-2.5 pt-2.5 border-t border-gray-200/60 flex items-center gap-2 text-xs font-semibold text-[var(--color-primary-gold)]">
-                <Tag size={14} />
-                <span>Limited Offer: Extra 10% OFF with code <strong className="font-mono bg-[var(--color-champagne)]/60 px-1.5 py-0.5 rounded text-[var(--color-dark)]">YEZ10</strong></span>
-              </div>
             </div>
 
             <div>

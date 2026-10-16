@@ -60,10 +60,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           setLocalCart([]);
         }
       }
-      const savedCoupon = localStorage.getItem('yezbee_coupon');
-      if (savedCoupon) {
-        setDiscountCode(savedCoupon);
-      }
+      try {
+        localStorage.removeItem('yezbee_coupon');
+      } catch {}
     } catch {
       setLocalCart([]);
     }
@@ -152,26 +151,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const safeCart = Array.isArray(localCart) ? localCart : [];
   const rawSubtotal = safeCart.reduce((sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1), 0);
-  const discountAmount = discountCode && rawSubtotal > 0 ? Math.min(rawSubtotal, 100) : 0;
+  const discountAmount = 0;
 
   const applyCoupon = useCallback(
-    (code: string) => {
-      const cleanCode = (code || '').trim().toUpperCase();
-      if (!cleanCode) {
-        return { success: false, message: 'Please enter a valid promo code.', discount: 0 };
-      }
-      setDiscountCode(cleanCode);
-      try {
-        localStorage.setItem('yezbee_coupon', cleanCode);
-      } catch {}
-      store.applyDiscount(cleanCode, 100);
+    (_code: string) => {
       return {
-        success: true,
-        message: `Promo code "${cleanCode}" applied! ₹100 discount added 🎉`,
-        discount: 100,
+        success: false,
+        message: 'Promo codes are currently disabled.',
+        discount: 0,
       };
     },
-    [store]
+    []
   );
 
   const removeCoupon = useCallback(() => {
